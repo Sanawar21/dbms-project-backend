@@ -174,4 +174,4 @@ cython_debug/
 .pypirc
 
 #CUSTOM
-.vscode/
+.vscode/".vscode/" 
