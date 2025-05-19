@@ -205,3 +205,30 @@ async def get_current_user(request: Request):
     if user:
         return JSONResponse(content={"success": True, "user": user})
     return JSONResponse(content={"success": False, "message": "Not logged in"}, status_code=401)
+
+
+@router.get("/api/course_labs/{course_code}")
+async def get_course_labs(course_code: str):
+    # Connect to the database
+    connection = mysql.connector.connect(
+        host=os.getenv("DATABASE_HOST"),
+        user=os.getenv("DATABASE_USER"),
+        password=os.getenv("DATABASE_PASSWORD"),
+        database=os.getenv("DATABASE_NAME")
+    )
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Fetch labs for the course
+        cursor.execute("""
+          SELECT l.*, c.COURSE_TITLE FROM Lab_Task l
+          JOIN Courses c ON l.COURSE_CODE = c.COURSE_CODE
+          WHERE l.COURSE_CODE = %s
+        """, (course_code,))
+        labs = cursor.fetchall()
+
+        return labs
+
+    finally:
+        cursor.close()
+        connection.close()

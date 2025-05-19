@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ course_name }} - Labs</title>
+    <title id="page-title">Course - Labs</title>
     <link rel="stylesheet" href="/static/coursestyles.css">
 </head>
 
@@ -15,25 +15,54 @@
 
     <div class="container">
         <div class="course-info">
-            <h2>{{ course_name }}</h2>
-            <p><strong>Course Code:</strong> {{ course_code }}</p>
+            <h2><span id="course-name"></span></h2>
+            <p> <span id="course-code"></span></p>
         </div>
 
         <h3 class="section-title">Available Labs</h3>
-        <div class="lab-list">
-            {% for lab in labs %}
-            <div class="lab-card" onclick="openLab('{{ course_id }}', '{{ lab.id }}')">
-                <h4>Lab No {{ lab.number }}</h4>
-                <p class="lab-title">{{ lab.title }}</p>
-            </div>
-            {% endfor %}
+        <div class="lab-list" id="lab-list">
+            <!-- Labs will be inserted here -->
         </div>
     </div>
 
     <script>
-        function openLab(courseId, labId) {
-            window.location.href = "/course/" + courseId + "/lab/" + labId;
+        const courseCode = window.location.pathname.split("/")[2];  // Extract course_code from URL
+
+
+        document.getElementById("course-code").textContent = courseCode;
+
+        async function fetchLabs() {
+            const response = await fetch(`/api/course_labs/${courseCode}`);
+            const labs = await response.json();
+
+            const labList = document.getElementById("lab-list");
+
+            if (labs.length === 0) {
+                labList.innerHTML = "<p>No labs found for this course.</p>";
+                return;
+            }
+
+            labs.forEach(lab => {
+                const labCard = document.createElement("div");
+                labCard.className = "lab-card";
+                labCard.onclick = () => openLab(courseCode, lab.LAB_NO);
+                labCard.innerHTML = `
+                    <h4>Lab # ${lab.LAB_NO}</h4>
+                    <p class="lab-title">${lab.LAB_TITLE}</p>
+                `;
+                labList.appendChild(labCard);
+            });
+
+            // Set course title from the first lab title prefix, or fallback
+            document.getElementById("course-name").textContent = labs[0].COURSE_TITLE;
+            document.title = `${labs[0]?.COURSE_CODE || "Course"} - Labs`;
         }
+
+        function openLab(courseId, labNo) {
+            window.location.href = `/course/${courseId}/lab/${labNo}`;
+        }
+
+        fetchLabs();
     </script>
 </body>
 

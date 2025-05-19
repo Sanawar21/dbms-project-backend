@@ -68,16 +68,14 @@ async def t_course(request: Request):
     return templates.TemplateResponse("teacher_portal.html", {"request": request, "courses": courses})
 
 
+@app.get("/course/{course_code}", response_class=HTMLResponse)
+async def course_labs(course_code, request: Request):
+    return templates.TemplateResponse("course_labs.html", {"request": request})
+
+
 @app.get("/course", response_class=HTMLResponse)
 async def course(request: Request):
     return templates.TemplateResponse("teacher_course.html", {"request": request, "courses": courses})
-
-
-@app.get("/course/{course_id}/labs", response_class=HTMLResponse)
-async def course_labs(course_id: int, request: Request):
-    selected_labs = [lab for lab in labs if lab['course_id'] == course_id]
-    course = next((c for c in courses if c['id'] == course_id), None)
-    return templates.TemplateResponse("course_labs.html", {"request": request, "course": course, "labs": selected_labs})
 
 
 @app.get("/course/{course_id}/lab/{lab_id}", response_class=HTMLResponse)

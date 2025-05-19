@@ -18,7 +18,6 @@
             <h2>Welcome, <span id="student-name">Your Name</span></h2>
             <div class="info-grid">
                 <p><strong>Roll No:</strong> <span id="roll-no">XXXXXXXXXX</span></p>
-                <p><strong>Year:</strong> <span id="year">N/A</span></p>
                 <p><strong>Batch:</strong> <span id="batch">N/A</span></p>
                 <p><strong>Semester:</strong> <span id="semester">N/A</span></p>
             </div>
@@ -72,9 +71,6 @@
             document.getElementById("batch").textContent = student.BATCH;
             document.getElementById("semester").textContent = student.SEMESTER;
 
-            const year = "20" + String(student.ROLL_NO).slice(0, 2);
-            document.getElementById("year").textContent = year;
-
             const rollNo = student.ROLL_NO;
             // Step 2: Fetch student courses
             const courseRes = await fetch(`/api/student_courses/${rollNo}`);
@@ -95,11 +91,14 @@
                     courseDiv.className = "course-card";
 
                     courseDiv.innerHTML = `
-                        <h4>${course.COURSE_TITLE}</h4>
-                        <p>${course.COURSE_CODE}</p>
-                    `;
+                        <a href="/course/${course.COURSE_CODE}/labs" style="text-decoration: none; color: inherit;">
+                            <h4>${course.COURSE_TITLE}</h4>
+                            <p>${course.COURSE_CODE}</p>
+                        </a>
+            `;
                     container.appendChild(courseDiv);
                 });
+
             } else {
                 container.innerHTML = `<p class="no-courses">Failed to load courses.</p>`;
             }
