@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrolled Students</title>
+    <link rel="stylesheet" href="/static/std_list.css">
+    <script>
+        // Lab submission data
+        const labSubmissions = {
+            "101": ["Lab 1 - Submitted", "Lab 2 - Submitted", "Lab 3 - Pending"],
+            "102": ["Lab 1 - Submitted", "Lab 2 - Pending", "Lab 3 - Submitted"],
+            "103": ["Lab 1 - Pending", "Lab 2 - Submitted", "Lab 3 - Submitted"]
+        };
+
+        function updateLabStatus(studentId) {
+            const selectedLab = document.getElementById(`labSelect-${studentId}`).value;
+            document.getElementById(`labStatus-${studentId}`).innerText = selectedLab;
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Department of Computer & Information Sciences</h1>
+    </header>
+    <div class="container">
+        <h2>Enrolled Students</h2>
+        <table>
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Submitted Lab Work</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>101</td>
+                <td>John Doe</td>
+                <td>johndoe@example.com</td>
+                <td>
+                    <select id="labSelect-101" onchange="updateLabStatus('101')">
+                        <option value="">-- Select Lab --</option>
+                        <option value="Lab 1 - Submitted">Lab 1</option>
+                        <option value="Lab 2 - Submitted">Lab 2</option>
+                        <option value="Lab 3 - Pending">Lab 3</option>
+                    </select>
+                </td>
+                <td id="labStatus-101">--</td>
+            </tr>
+            <tr>
+                <td>102</td>
+                <td>Jane Smith</td>
+                <td>janesmith@example.com</td>
+                <td>
+                    <select id="labSelect-102" onchange="updateLabStatus('102')">
+                        <option value="">-- Select Lab --</option>
+                        <option value="Lab 1 - Submitted">Lab 1</option>
+                        <option value="Lab 2 - Pending">Lab 2</option>
+                        <option value="Lab 3 - Submitted">Lab 3</option>
+                    </select>
+                </td>
+                <td id="labStatus-102">--</td>
+            </tr>
+            <tr>
+                <td>103</td>
+                <td>Michael Brown</td>
+                <td>michaelbrown@example.com</td>
+                <td>
+                    <select id="labSelect-103" onchange="updateLabStatus('103')">
+                        <option value="">-- Select Lab --</option>
+                        <option value="Lab 1 - Pending">Lab 1</option>
+                        <option value="Lab 2 - Submitted">Lab 2</option>
+                        <option value="Lab 3 - Submitted">Lab 3</option>
+                    </select>
+                </td>
+                <td id="labStatus-103">--</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal</title>
+    <link rel="stylesheet" href="static/std.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Computer & Information System Engineering Department </h1>
+    </div>
+
+    <div class="container">
+        <div class="student-info">
+            <h2>Welcome, <span class="{{ 'placeholder' if not student_name else '' }}">{{ student_name or "Your Name" }}</span></h2>
+            <p><strong>Roll No:</strong> <span class="{{ 'placeholder' if not roll_no else '' }}">{{ roll_no or "XXXXXXXXXX" }}</span></p>
+            <p><strong>Year:</strong> <span class="{{ 'placeholder' if not year else '' }}">{{ year or "N/A" }}</span></p>
+            <p><strong>Batch:</strong> <span class="{{ 'placeholder' if not batch else '' }}">{{ batch or "N/A" }}</span></p>
+            <p><strong>Semester:</strong> <span class="{{ 'placeholder' if not semester else '' }}">{{ semester or "N/A" }}</span></p>
+        </div>
+        
+
+        <h3 class="section-title">Your Lab Courses</h3>
+        <div class="courses-container">
+            {% if lab_courses %}
+                {% for course in lab_courses %}
+                <div class="course-card" onclick="openCourse('{{ course.id }}')">
+                    <h4>{{ course.name }}</h4>
+                    <p>{{ course.code }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-courses">No lab courses assigned yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function openCourse(courseId) {
+            window.location.href = "/course/" + courseId;
+        }
+    </script>
+</body>
+</html>

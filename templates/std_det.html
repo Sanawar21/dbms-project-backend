@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Students - Lab Submissions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='std_det.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>All Students Lab Submissions</h1>
+
+    {% for entry in all_details %}
+        <div class="student-box">
+            <h2>{{ entry.student.name }} (ID: {{ entry.student.id }})</h2>
+            <p><strong>Course:</strong> {{ entry.course.name if entry.course else 'N/A' }}</p>
+
+            {% if entry.submissions %}
+                {% for sub in entry.submissions %}
+                    <div class="lab-box">
+                        <h3>Lab {{ sub.lab_number }}</h3>
+                        <table>
+                            <tr>
+                                <th>Question</th>
+                                <th>Answer</th>
+                            </tr>
+                            {% for q in sub.questions %}
+                            <tr>
+                                <td>{{ q.text }}</td>
+                                <td>
+                                    {{ sub.answers['Q' + q.id|string] if ('Q' + q.id|string) in sub.answers else 'No answer' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No submissions found for this student.</p>
+            {% endif %}
+        </div>
+        <hr>
+    {% endfor %}
+</div>
+</body>
+</html>

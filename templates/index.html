@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | CIS PORTAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="icon" href="static/icon.png">
+</head>
+
+<body>
+    <span class="header">
+        <h1>COMPUTER & INFORMATION SYSTEM ENGINEERING</h1>
+    </span>
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email@neduet.pk" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+        <p id="error-message" style="color: red; display: none;"></p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = new FormData(this);
+
+            const response = await fetch('/api/authenticate', {
+                method: 'POST',
+                body: form
+            });
+
+            const result = await response.json();
+            const errorMsg = document.getElementById('error-message');
+
+            if (response.ok && result.success) {
+                if (result.user.type === "teacher") {
+                    window.location.href = '/dashboard';  // Redirect on success
+                } else {
+                    window.location.href = '/student_portal';  // Redirect on success
+                }
+            } else {
+                errorMsg.textContent = result.message;
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>

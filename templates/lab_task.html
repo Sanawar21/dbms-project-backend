@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBMS Lab Task - {{ course_name }}</title>
+    <link rel="stylesheet" href="/static/lab_task.css">
+</head>
+<body>
+    <div class="header">
+        <h1>DATABASE MANAGEMENT SYSTEM LAB</h1>
+    </div>
+
+    <div class="container">
+        <div class="course-info">
+            <h2>{{ course_name }}</h2>
+            <p><strong>Lab No:</strong> {{ lab_number }}</p>
+        </div>
+
+        <h3 class="section-title">Lab Tasks</h3>
+        <form id="lab-form" action="/submit_lab/{{ course_id }}/{{ lab_id }}" method="post">
+            <div class="task-list">
+                {% for question in questions %}
+                <div class="task-item">
+                    <p class="question"><strong>Q{{ loop.index }}:</strong> {{ question.text }}</p>
+                    
+                    {% if question.type == 'mcq' %}
+                        <div class="options">
+                            {% for option in question.options %}
+                                <label class="option">
+                                    <input type="radio" name="answer_{{ question.id }}" value="{{ option }}" required>
+                                    {{ option }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <textarea class="answer-box" name="answer_{{ question.id }}" placeholder="Write your answer here..." required></textarea>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Answers</button>
+        </form>
+    </div>
+</body>
+</html>
