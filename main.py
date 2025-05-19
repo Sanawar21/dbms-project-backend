@@ -63,6 +63,11 @@ async def std_portal(request: Request):
     return templates.TemplateResponse("std_portal.html", {"request": request})
 
 
+@app.get("/teacher_portal", response_class=HTMLResponse)
+async def t_course(request: Request):
+    return templates.TemplateResponse("teacher_portal.html", {"request": request, "courses": courses})
+
+
 @app.get("/course", response_class=HTMLResponse)
 async def course(request: Request):
     return templates.TemplateResponse("teacher_course.html", {"request": request, "courses": courses})
@@ -91,11 +96,6 @@ async def submit_lab(course_id: int, lab_id: int, request: Request):
     answers = dict(form_data)
     print("User Answers:", answers)
     return RedirectResponse(url="/", status_code=302)
-
-
-@app.get("/teacher_course", response_class=HTMLResponse)
-async def t_course(request: Request):
-    return templates.TemplateResponse("teacher_course.html", {"request": request, "courses": courses})
 
 
 @app.get("/t_opt", response_class=HTMLResponse)

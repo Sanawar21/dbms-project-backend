@@ -169,6 +169,36 @@ async def get_student_courses(roll_no: int):
         connection.close()
 
 
+@router.get("/api/teacher_courses/{teacher_id}")
+async def get_teacher_courses(teacher_id: int):
+    # Connect to the database
+    connection = mysql.connector.connect(
+        host=os.getenv("DATABASE_HOST"),
+        user=os.getenv("DATABASE_USER"),
+        password=os.getenv("DATABASE_PASSWORD"),
+        database=os.getenv("DATABASE_NAME")
+    )
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Fetch courses for the teacher
+        cursor.execute("""
+          SELECT * FROM Courses c
+          WHERE c.COURSE_CODE IN (
+            SELECT tc.COURSE_CODE
+            FROM Teacher_Course tc
+            WHERE tc.TEACHER_ID = %s
+          )
+        """, (teacher_id,))
+        courses = cursor.fetchall()
+
+        return JSONResponse(content={"success": True, "courses": courses})
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @router.get("/api/current_user")
 async def get_current_user(request: Request):
     user = request.session.get("user")

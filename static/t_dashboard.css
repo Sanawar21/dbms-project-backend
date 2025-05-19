@@ -1,7 +1,6 @@
 body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-    background-image: url('/static/background.jpg'), linear-gradient(to right, #0f2027, #203a43, #2c5364);
     background-blend-mode: overlay;
     background-size: cover;
     background-position: center;

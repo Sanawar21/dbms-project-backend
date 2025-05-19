@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ course_name }} - Labs</title>
     <link rel="stylesheet" href="/static/coursestyles.css">
 </head>
+
 <body>
     <div class="header">
         <h1>Department of Computer & Information Sciences</h1>
@@ -22,6 +24,7 @@
             {% for lab in labs %}
             <div class="lab-card" onclick="openLab('{{ course_id }}', '{{ lab.id }}')">
                 <h4>Lab No {{ lab.number }}</h4>
+                <p class="lab-title">{{ lab.title }}</p>
             </div>
             {% endfor %}
         </div>
@@ -33,5 +36,5 @@
         }
     </script>
 </body>
-</html>
 
+</html>

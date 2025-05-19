@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Portal - Lab Courses</title>
+    <link rel="stylesheet" href="static/std.css">
+</head>
+
+<body>
+    <div class="header">
+        <h1>Computer & Information System Engineering Department</h1>
+    </div>
+
+    <div class="container">
+        <!-- Student Info Section -->
+        <div class="student-info">
+            <h2>Welcome, <span id="student-name">Your Name</span></h2>
+            <div class="info-grid">
+                <p><strong>ID:</strong> <span id="teacher_id">XXXXXXXXXX</span></p>
+                <p><strong>Email:</strong> <span id="email">N/A</span></p>
+            </div>
+        </div>
+        <!-- Lab Courses Section -->
+        <h3 class="section-title">Assigned Lab Courses</h3>
+        <div class="courses-container">
+            {% if lab_courses %}
+            {% for course in lab_courses %}
+            <div class="course-card">
+                <h4>{{ course.name }}</h4>
+                <p>{{ course.code }}</p>
+
+                {% if course.labs %}
+                <div class="lab-buttons">
+                    <h5>Available Labs:</h5>
+                    {% for lab in course.labs %}
+                    <a class="lab-btn" href="/lab_details/{{ lab.id }}">Lab {{ lab.number }}</a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="no-labs">No labs available for this course.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="no-courses">No lab courses assigned yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const container = document.querySelector(".courses-container");
+
+        try {
+            // Step 1: Get logged-in student from session
+            const studentRes = await fetch("/api/current_user");
+            const studentData = await studentRes.json();
+
+            if (!studentData.success) {
+                container.innerHTML = `<p class="no-courses">You are not logged in.</p>`;
+                return;
+            }
+
+            const student = studentData.user;
+
+            document.getElementById("student-name").textContent = student.TEACHER_NAME;
+            document.getElementById("teacher_id").textContent = student.TEACHER_ID;
+            document.getElementById("email").textContent = student.EMAIL;
+
+
+            const rollNo = student.TEACHER_ID;
+            // Step 2: Fetch student courses
+            const courseRes = await fetch(`/api/teacher_courses/${rollNo}`);
+            const courseData = await courseRes.json();
+
+            if (courseData.success) {
+                const courses = courseData.courses;
+
+                if (!courses.length) {
+                    container.innerHTML = `<p class="no-courses">No lab courses assigned yet.</p>`;
+                    return;
+                } else {
+                    container.innerHTML = ""; // Clear the container
+                }
+
+                courses.forEach(course => {
+                    const courseDiv = document.createElement("div");
+                    courseDiv.className = "course-card";
+
+                    courseDiv.innerHTML = `
+                        <h4>${course.COURSE_TITLE}</h4>
+                        <p>${course.COURSE_CODE}</p>
+                    `;
+                    container.appendChild(courseDiv);
+                });
+            } else {
+                container.innerHTML = `<p class="no-courses">Failed to load courses.</p>`;
+            }
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<p class="no-courses">Error loading student data.</p>`;
+        }
+    });
+</script>
+
+</html>
