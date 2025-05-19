@@ -1,4 +1,5 @@
 # api.py
+from fastapi import APIRouter, Request
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import JSONResponse
 from fastapi import Depends
@@ -6,24 +7,99 @@ from fastapi import Depends
 import os
 import mysql.connector
 
+# THIS IS THE DATABASE SCHEMA
+# DROP DATABASE IF EXISTS dbms;
+# CREATE DATABASE dbms;
+# USE dbms;
+
+# CREATE TABLE IF NOT EXISTS COURSES(
+#     COURSE_CODE VARCHAR(10) PRIMARY KEY,
+#     COURSE_TITLE VARCHAR(100) UNIQUE
+# );
+
+# CREATE TABLE IF NOT EXISTS LAB_TASK (
+#     COURSE_CODE VARCHAR(10),
+#     LAB_NO INT(5),
+#     LAB_TITLE VARCHAR(100) UNIQUE,
+#     PRIMARY KEY (COURSE_CODE, LAB_NO),
+#     FOREIGN KEY (COURSE_CODE) REFERENCES COURSES(COURSE_CODE)
+# );
+
+# CREATE TABLE IF NOT EXISTS LAB_INFO (
+#     LAB_TITLE VARCHAR(100),
+#     DEADLINE DATE,
+#     FOREIGN KEY (LAB_TITLE) REFERENCES LAB_TASK(LAB_TITLE),
+#     PRIMARY KEY (LAB_TITLE)
+# );
+
+
+# CREATE TABLE IF NOT EXISTS STUDENT(
+#     ROLL_NO INT(10),
+#     BATCH INT(4),
+#     STUDENT_NAME VARCHAR(200),
+#     SEMESTER VARCHAR(10),
+#     EMAIL VARCHAR(100) UNIQUE,
+#     PASSWORD VARCHAR(100),
+#     PRIMARY KEY (ROLL_NO),
+#     CONSTRAINT chk_roll_no CHECK (ROLL_NO BETWEEN 10000 AND 99999)
+# );
+
+# CREATE TABLE IF NOT EXISTS STUDENT_COURSE(
+#     ROLL_NO INT(10),
+#     COURSE_CODE VARCHAR(10),
+#     PRIMARY KEY (ROLL_NO, COURSE_CODE),
+#     FOREIGN KEY (ROLL_NO) REFERENCES STUDENT(ROLL_NO),
+#     FOREIGN KEY (COURSE_CODE) REFERENCES COURSES(COURSE_CODE)
+# );
+
+
+# CREATE TABLE IF NOT EXISTS TEACHER (
+#     TEACHER_ID INT(10) PRIMARY KEY,
+#     TEACHER_NAME VARCHAR(100),
+#     EMAIL VARCHAR(100) UNIQUE,
+#     PASSWORD VARCHAR(100)
+# );
+
+# CREATE TABLE IF NOT EXISTS TEACHER_COURSE (
+#     TEACHER_ID INT(10),
+#     COURSE_CODE VARCHAR(10),
+#     PRIMARY KEY (TEACHER_ID, COURSE_CODE),
+#     FOREIGN KEY (TEACHER_ID) REFERENCES TEACHER(TEACHER_ID),
+#     FOREIGN KEY (COURSE_CODE) REFERENCES COURSES(COURSE_CODE)
+# );
+# CREATE TABLE IF NOT EXISTS QUESTION (
+#     COURSE_CODE VARCHAR(10),
+#     LAB_NO INT(5),
+#     TASK_NO INT(5),
+#     QUESTION_TEXT TEXT,
+#     PRIMARY KEY (COURSE_CODE, LAB_NO, TASK_NO),
+#     FOREIGN KEY (COURSE_CODE, LAB_NO) REFERENCES LAB_TASK(COURSE_CODE, LAB_NO) ON DELETE CASCADE
+# );
+
+# CREATE TABLE IF NOT EXISTS ANSWER (
+#     COURSE_CODE VARCHAR(10),
+#     LAB_NO INT(5),
+#     TASK_NO INT(5),
+#     ROLL_NO INT(10),
+#     ANSWER_TEXT TEXT,
+#     PRIMARY KEY (COURSE_CODE, LAB_NO, TASK_NO, ROLL_NO),
+#     FOREIGN KEY (COURSE_CODE, LAB_NO, TASK_NO) REFERENCES QUESTION(COURSE_CODE, LAB_NO, TASK_NO) ON DELETE CASCADE,
+#     FOREIGN KEY (ROLL_NO) REFERENCES STUDENT(ROLL_NO) ON DELETE CASCADE
+# );
+
+# CREATE TABLE IF NOT EXISTS SUBMISSION (
+#     SUBMISSION_ID INT AUTO_INCREMENT PRIMARY KEY,
+#     COURSE_CODE VARCHAR(10),
+#     ROLL_NO INT(10),
+#     LAB_NO INT(5),
+#     STATUS VARCHAR(100),
+#     SUBMISSION_DATE DATE,
+#     FOREIGN KEY (ROLL_NO) REFERENCES STUDENT(ROLL_NO),
+#     FOREIGN KEY (COURSE_CODE, LAB_NO) REFERENCES LAB_TASK(COURSE_CODE, LAB_NO) ON DELETE CASCADE
+# );
 
 router = APIRouter()
 
-# VALID_USERS = {
-#     "ali@neduet.pk": {"name": "Ali", "email": "ali@neduet.pk", "role": "student"},
-#     "fatima@neduet.pk": {"name": "Fatima", "email": "fatima@neduet.pk", "role": "teacher"}
-# }
-
-
-# @router.post("/api/authenticate")
-# async def authenticate(request: Request, email: str = Form(...), password: str = Form(...)):
-#     # Simulate checking password
-#     if email in VALID_USERS and password == "pass123":  # static password for now
-#         user = VALID_USERS[email]
-#         request.session["user"] = user  # ✅ Set user in session
-#         return JSONResponse(content={"success": True, "message": "Login successful"})
-
-#     return JSONResponse(content={"success": False, "message": "Incorrect email or password"}, status_code=401)
 
 @router.post("/api/authenticate")
 async def authenticate(request: Request, email: str = Form(...), password: str = Form(...)):
@@ -61,3 +137,41 @@ async def authenticate(request: Request, email: str = Form(...), password: str =
     finally:
         cursor.close()
         connection.close()
+
+
+@router.get("/api/student_courses/{roll_no}")
+async def get_student_courses(roll_no: int):
+    # Connect to the database
+    connection = mysql.connector.connect(
+        host=os.getenv("DATABASE_HOST"),
+        user=os.getenv("DATABASE_USER"),
+        password=os.getenv("DATABASE_PASSWORD"),
+        database=os.getenv("DATABASE_NAME")
+    )
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Fetch courses for the student
+        cursor.execute("""
+          SELECT * FROM Courses c
+          WHERE c.COURSE_CODE IN (
+            SELECT sc.COURSE_CODE
+            FROM Student_Course sc
+            WHERE sc.ROLL_NO = %s
+          )
+        """, (roll_no,))
+        courses = cursor.fetchall()
+
+        return JSONResponse(content={"success": True, "courses": courses})
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.get("/api/current_user")
+async def get_current_user(request: Request):
+    user = request.session.get("user")
+    if user:
+        return JSONResponse(content={"success": True, "user": user})
+    return JSONResponse(content={"success": False, "message": "Not logged in"}, status_code=401)

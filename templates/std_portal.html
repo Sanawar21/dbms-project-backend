@@ -1,45 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal</title>
+    <title>Student Portal - Lab Courses</title>
     <link rel="stylesheet" href="static/std.css">
 </head>
+
 <body>
     <div class="header">
-        <h1>Computer & Information System Engineering Department </h1>
+        <h1>Computer & Information System Engineering Department</h1>
     </div>
 
     <div class="container">
+        <!-- Student Info Section -->
         <div class="student-info">
-            <h2>Welcome, <span class="{{ 'placeholder' if not student_name else '' }}">{{ student_name or "Your Name" }}</span></h2>
-            <p><strong>Roll No:</strong> <span class="{{ 'placeholder' if not roll_no else '' }}">{{ roll_no or "XXXXXXXXXX" }}</span></p>
-            <p><strong>Year:</strong> <span class="{{ 'placeholder' if not year else '' }}">{{ year or "N/A" }}</span></p>
-            <p><strong>Batch:</strong> <span class="{{ 'placeholder' if not batch else '' }}">{{ batch or "N/A" }}</span></p>
-            <p><strong>Semester:</strong> <span class="{{ 'placeholder' if not semester else '' }}">{{ semester or "N/A" }}</span></p>
+            <h2>Welcome, <span id="student-name">Your Name</span></h2>
+            <div class="info-grid">
+                <p><strong>Roll No:</strong> <span id="roll-no">XXXXXXXXXX</span></p>
+                <p><strong>Year:</strong> <span id="year">N/A</span></p>
+                <p><strong>Batch:</strong> <span id="batch">N/A</span></p>
+                <p><strong>Semester:</strong> <span id="semester">N/A</span></p>
+            </div>
         </div>
-        
-
+        <!-- Lab Courses Section -->
         <h3 class="section-title">Your Lab Courses</h3>
         <div class="courses-container">
             {% if lab_courses %}
-                {% for course in lab_courses %}
-                <div class="course-card" onclick="openCourse('{{ course.id }}')">
-                    <h4>{{ course.name }}</h4>
-                    <p>{{ course.code }}</p>
+            {% for course in lab_courses %}
+            <div class="course-card">
+                <h4>{{ course.name }}</h4>
+                <p>{{ course.code }}</p>
+
+                {% if course.labs %}
+                <div class="lab-buttons">
+                    <h5>Available Labs:</h5>
+                    {% for lab in course.labs %}
+                    <a class="lab-btn" href="/lab_details/{{ lab.id }}">Lab {{ lab.number }}</a>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                {% else %}
+                <p class="no-labs">No labs available for this course.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
             {% else %}
-                <p class="no-courses">No lab courses assigned yet.</p>
+            <p class="no-courses">No lab courses assigned yet.</p>
             {% endif %}
         </div>
     </div>
-
-    <script>
-        function openCourse(courseId) {
-            window.location.href = "/course/" + courseId;
-        }
-    </script>
 </body>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const container = document.querySelector(".courses-container");
+
+        try {
+            // Step 1: Get logged-in student from session
+            const studentRes = await fetch("/api/current_user");
+            const studentData = await studentRes.json();
+
+            if (!studentData.success) {
+                container.innerHTML = `<p class="no-courses">You are not logged in.</p>`;
+                return;
+            }
+
+            const student = studentData.user;
+
+            document.getElementById("student-name").textContent = student.STUDENT_NAME;
+            document.getElementById("roll-no").textContent = student.ROLL_NO;
+            document.getElementById("batch").textContent = student.BATCH;
+            document.getElementById("semester").textContent = student.SEMESTER;
+
+            const year = "20" + String(student.ROLL_NO).slice(0, 2);
+            document.getElementById("year").textContent = year;
+
+            const rollNo = student.ROLL_NO;
+            // Step 2: Fetch student courses
+            const courseRes = await fetch(`/api/student_courses/${rollNo}`);
+            const courseData = await courseRes.json();
+
+            if (courseData.success) {
+                const courses = courseData.courses;
+
+                if (!courses.length) {
+                    container.innerHTML = `<p class="no-courses">No lab courses assigned yet.</p>`;
+                    return;
+                } else {
+                    container.innerHTML = ""; // Clear the container
+                }
+
+                courses.forEach(course => {
+                    const courseDiv = document.createElement("div");
+                    courseDiv.className = "course-card";
+
+                    courseDiv.innerHTML = `
+                        <h4>${course.COURSE_TITLE}</h4>
+                        <p>${course.COURSE_CODE}</p>
+                    `;
+                    container.appendChild(courseDiv);
+                });
+            } else {
+                container.innerHTML = `<p class="no-courses">Failed to load courses.</p>`;
+            }
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<p class="no-courses">Error loading student data.</p>`;
+        }
+    });
+</script>
+
 </html>
