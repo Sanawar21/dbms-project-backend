@@ -73,19 +73,14 @@ async def course_labs(course_code, request: Request):
     return templates.TemplateResponse("course_labs.html", {"request": request})
 
 
+@app.get("/course/{course_id}/lab/{lab_id}", response_class=HTMLResponse)
+async def lab_task(course_id, lab_id, request: Request):
+    return templates.TemplateResponse("lab_task.html", {"request": request})
+
+
 @app.get("/course", response_class=HTMLResponse)
 async def course(request: Request):
     return templates.TemplateResponse("teacher_course.html", {"request": request, "courses": courses})
-
-
-@app.get("/course/{course_id}/lab/{lab_id}", response_class=HTMLResponse)
-async def lab_task(course_id: int, lab_id: int, request: Request):
-    lab = next((lab for lab in labs if lab['id'] ==
-               lab_id and lab['course_id'] == course_id), None)
-    course = next((c for c in courses if c['id'] == course_id), None)
-    if not lab or not course:
-        return HTMLResponse(content="Lab or course not found", status_code=404)
-    return templates.TemplateResponse("lab_task.html", {"request": request, "course": course, "lab": lab, "questions": lab['questions']})
 
 
 @app.post("/submit_lab/{course_id}/{lab_id}")

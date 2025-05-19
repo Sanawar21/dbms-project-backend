@@ -1,47 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DBMS Lab Task - {{ course_name }}</title>
+    <title id="page-title">Lab Task</title>
     <link rel="stylesheet" href="/static/lab_task.css">
 </head>
-<body>
-    <div class="header">
-        <h1>DATABASE MANAGEMENT SYSTEM LAB</h1>
-    </div>
 
+<body>
     <div class="container">
         <div class="course-info">
-            <h2>{{ course_name }}</h2>
-            <p><strong>Lab No:</strong> {{ lab_number }}</p>
+            <h2 class="course-name" id="course-title"></h2>
+            <br>
+            <p><strong>Lab # <span class="lab-no" id="lab-no"></span>: <span class="lab-title"></span> </strong></p>
         </div>
 
-        <h3 class="section-title">Lab Tasks</h3>
-        <form id="lab-form" action="/submit_lab/{{ course_id }}/{{ lab_id }}" method="post">
-            <div class="task-list">
-                {% for question in questions %}
-                <div class="task-item">
-                    <p class="question"><strong>Q{{ loop.index }}:</strong> {{ question.text }}</p>
-                    
-                    {% if question.type == 'mcq' %}
-                        <div class="options">
-                            {% for option in question.options %}
-                                <label class="option">
-                                    <input type="radio" name="answer_{{ question.id }}" value="{{ option }}" required>
-                                    {{ option }}
-                                </label>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <textarea class="answer-box" name="answer_{{ question.id }}" placeholder="Write your answer here..." required></textarea>
-                    {% endif %}
-                </div>
-                {% endfor %}
+        <form id="lab-form" method="post">
+            <div class="task-list" id="task-list">
+                <!-- Questions inserted dynamically -->
             </div>
 
-            <button type="submit" class="submit-btn">Submit Answers</button>
+            <button type="submit" class="submit-btn">Submit</button>
         </form>
     </div>
+
+    <script>
+        document.getElementById("lab-form").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            formData.append("course_code", courseCode);
+            formData.append("lab_no", labNo);
+
+            try {
+                const response = await fetch("/api/submit_lab", {
+                    method: "POST",
+                    body: formData,
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("Lab successfully submitted!");
+                    window.location.href = result.redirect;
+                } else {
+                    alert("Submission failed: " + result.message);
+                }
+            } catch (err) {
+                alert("An error occurred during submission.");
+            }
+        });
+    </script>
+    <script>
+        const parts = window.location.pathname.split("/");
+        const courseCode = parts[2];
+        const labNo = parts[4];
+
+        document.getElementById("course-title").textContent = courseCode;
+        document.getElementById("lab-no").textContent = labNo;
+        document.title = `Lab Task - ${courseCode}`;
+
+        // const form = document.getElementById("lab-form");
+        // form.action = `/submit_lab/${courseCode}/${labNo}`;
+
+        async function loadQuestions() {
+            const response = await fetch(`/api/lab_tasks/${courseCode}/${labNo}`);
+            const data = await response.json();
+
+            if (!data.success || data.questions.length === 0) {
+                document.getElementById("task-list").innerHTML = "<p>No questions found.</p>";
+                return;
+            }
+
+            const courseName = data.questions[0].COURSE_TITLE;
+            const labTitle = data.questions[0].LAB_TITLE;
+            Array.from(document.getElementsByClassName("lab-title")).forEach((val) => val.textContent = labTitle);
+
+            Array.from(document.getElementsByClassName("course-name")).forEach((val) => val.textContent = courseName);
+            // document.getElementById("course-name").textContent = courseName;
+
+            const taskList = document.getElementById("task-list");
+
+            data.questions.forEach((q, index) => {
+                const div = document.createElement("div");
+                div.className = "task-item";
+
+                div.innerHTML = `
+                    <p class="question"><strong>Q${index + 1}:</strong> ${q.QUESTION_TEXT}</p>
+                    <textarea class="answer-box" name="answer_${q.TASK_NO}" placeholder="Write your answer here..." required></textarea>
+                `;
+
+                taskList.appendChild(div);
+            });
+        }
+
+        loadQuestions();
+    </script>
 </body>
+
 </html>

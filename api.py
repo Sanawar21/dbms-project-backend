@@ -101,17 +101,21 @@ import mysql.connector
 router = APIRouter()
 
 
-@router.post("/api/authenticate")
-async def authenticate(request: Request, email: str = Form(...), password: str = Form(...)):
-    # Connect to the database
-    connection = mysql.connector.connect(
+def get_db_connection_and_cursor():
+    """Create a new database connection."""
+    conn = mysql.connector.connect(
         host=os.getenv("DATABASE_HOST"),
         user=os.getenv("DATABASE_USER"),
         password=os.getenv("DATABASE_PASSWORD"),
         database=os.getenv("DATABASE_NAME")
     )
-    cursor = connection.cursor(dictionary=True)
+    return conn, conn.cursor(dictionary=True)
 
+
+@router.post("/api/authenticate")
+async def authenticate(request: Request, email: str = Form(...), password: str = Form(...)):
+    # Connect to the database
+    connection, cursor = get_db_connection_and_cursor()
     try:
         # Search in Teacher table
         cursor.execute("SELECT * FROM Teacher WHERE email = %s", (email,))
@@ -142,13 +146,7 @@ async def authenticate(request: Request, email: str = Form(...), password: str =
 @router.get("/api/student_courses/{roll_no}")
 async def get_student_courses(roll_no: int):
     # Connect to the database
-    connection = mysql.connector.connect(
-        host=os.getenv("DATABASE_HOST"),
-        user=os.getenv("DATABASE_USER"),
-        password=os.getenv("DATABASE_PASSWORD"),
-        database=os.getenv("DATABASE_NAME")
-    )
-    cursor = connection.cursor(dictionary=True)
+    connection, cursor = get_db_connection_and_cursor()
 
     try:
         # Fetch courses for the student
@@ -172,13 +170,7 @@ async def get_student_courses(roll_no: int):
 @router.get("/api/teacher_courses/{teacher_id}")
 async def get_teacher_courses(teacher_id: int):
     # Connect to the database
-    connection = mysql.connector.connect(
-        host=os.getenv("DATABASE_HOST"),
-        user=os.getenv("DATABASE_USER"),
-        password=os.getenv("DATABASE_PASSWORD"),
-        database=os.getenv("DATABASE_NAME")
-    )
-    cursor = connection.cursor(dictionary=True)
+    connection, cursor = get_db_connection_and_cursor()
 
     try:
         # Fetch courses for the teacher
@@ -210,13 +202,7 @@ async def get_current_user(request: Request):
 @router.get("/api/course_labs/{course_code}")
 async def get_course_labs(course_code: str):
     # Connect to the database
-    connection = mysql.connector.connect(
-        host=os.getenv("DATABASE_HOST"),
-        user=os.getenv("DATABASE_USER"),
-        password=os.getenv("DATABASE_PASSWORD"),
-        database=os.getenv("DATABASE_NAME")
-    )
-    cursor = connection.cursor(dictionary=True)
+    connection, cursor = get_db_connection_and_cursor()
 
     try:
         # Fetch labs for the course
@@ -229,6 +215,25 @@ async def get_course_labs(course_code: str):
 
         return labs
 
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.get("/api/lab_tasks/{course_code}/{lab_no}")
+async def get_lab_tasks(course_code: str, lab_no: int):
+    connection, cursor = get_db_connection_and_cursor()
+    try:
+        cursor.execute("""
+            SELECT q.TASK_NO, q.QUESTION_TEXT, c.COURSE_TITLE, l.LAB_TITLE
+            FROM QUESTION q
+            JOIN COURSES c ON q.COURSE_CODE = c.COURSE_CODE
+            JOIN LAB_TASK l ON q.COURSE_CODE = l.COURSE_CODE AND q.LAB_NO = l.LAB_NO
+            WHERE q.COURSE_CODE = %s AND q.LAB_NO = %s
+            ORDER BY q.TASK_NO ASC
+        """, (course_code, lab_no))
+        tasks = cursor.fetchall()
+        return JSONResponse(content={"success": True, "questions": tasks})
     finally:
         cursor.close()
         connection.close()
