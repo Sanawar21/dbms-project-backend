@@ -3,12 +3,20 @@ INSERT INTO COURSES (COURSE_CODE, COURSE_TITLE) VALUES
 ('CS103', 'Data Structures and Algorithms with Python');
 
 -- Insert Lab Tasks for CS103
-INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE, DEADLINE) VALUES
-('CS103', 1, 'Lists, Stacks, and Queues', '2025-04-10'),
-('CS103', 2, 'Linked Lists', '2025-04-17'),
-('CS103', 3, 'Recursion and Sorting Algorithms', '2025-04-24'),
-('CS103', 4, 'Trees and Graphs', '2025-05-01'),
-('CS103', 5, 'Hashing and Searching Algorithms', '2025-05-08');
+INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE) VALUES
+('CS103', 1, 'Lists, Stacks, and Queues'),
+('CS103', 2, 'Linked Lists'),
+('CS103', 3, 'Recursion and Sorting Algorithms'),
+('CS103', 4, 'Trees and Graphs'),
+('CS103', 5, 'Hashing and Searching Algorithms');
+
+-- Insert Lab Info for CS103
+INSERT INTO LAB_INFO (LAB_TITLE, DEADLINE) VALUES
+('Lists, Stacks, and Queues', '2025-04-10'),
+('Linked Lists', '2025-04-17'),
+('Recursion and Sorting Algorithms', '2025-04-24'),
+('Trees and Graphs', '2025-05-01'),
+('Hashing and Searching Algorithms', '2025-05-08');
 
 -- Insert Questions for Lab #1 (Lists, Stacks, and Queues)
 INSERT INTO QUESTION (COURSE_CODE, LAB_NO, TASK_NO, QUESTION_TEXT) VALUES

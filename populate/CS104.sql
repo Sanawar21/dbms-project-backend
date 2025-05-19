@@ -3,12 +3,20 @@ INSERT INTO COURSES (COURSE_CODE, COURSE_TITLE) VALUES
 ('CS104', 'Computer Engineering Workshop with C');
 
 -- Insert Lab Tasks for CS104
-INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE, DEADLINE) VALUES
-('CS104', 1, 'Introduction to C Programming and Basic I/O', '2025-04-10'),
-('CS104', 2, 'Control Structures and Functions', '2025-04-17'),
-('CS104', 3, 'Arrays, Pointers, and Strings', '2025-04-24'),
-('CS104', 4, 'Structures, File Handling, and Memory Management', '2025-05-01'),
-('CS104', 5, 'Interfacing C with Hardware (Embedded C Basics)', '2025-05-08');
+INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE) VALUES
+('CS104', 1, 'Introduction to C Programming and Basic I/O'),
+('CS104', 2, 'Control Structures and Functions'),
+('CS104', 3, 'Arrays, Pointers, and Strings'),
+('CS104', 4, 'Structures, File Handling, and Memory Management'),
+('CS104', 5, 'Interfacing C with Hardware (Embedded C Basics)');
+
+-- Insert Lab Info for CS104
+INSERT INTO LAB_INFO (LAB_TITLE, DEADLINE) VALUES
+('Introduction to C Programming and Basic I/O', '2025-04-10'),
+('Control Structures and Functions', '2025-04-17'),
+('Arrays, Pointers, and Strings', '2025-04-24'),
+('Structures, File Handling, and Memory Management', '2025-05-01'),
+('Interfacing C with Hardware (Embedded C Basics)', '2025-05-08');
 
 -- Insert Questions for Lab #1 (Introduction to C Programming and Basic I/O)
 INSERT INTO QUESTION (COURSE_CODE, LAB_NO, TASK_NO, QUESTION_TEXT) VALUES

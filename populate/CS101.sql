@@ -3,12 +3,20 @@ INSERT INTO COURSES (COURSE_CODE, COURSE_TITLE) VALUES
 ('CS101', 'Computer Programming with Python');
 
 -- Insert Lab Tasks for the Course
-INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE, DEADLINE) VALUES
-('CS101', 1, 'Variables and Data Types', '2025-04-10'),
-('CS101', 2, 'Control Flow and Loops', '2025-04-17'),
-('CS101', 3, 'Functions and Modules', '2025-04-24'),
-('CS101', 4, 'File Handling', '2025-05-01'),
-('CS101', 5, 'Object-Oriented Programming', '2025-05-08');
+INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE) VALUES
+('CS101', 1, 'Variables and Data Types'),
+('CS101', 2, 'Control Flow and Loops'),
+('CS101', 3, 'Functions and Modules'),
+('CS101', 4, 'File Handling'),
+('CS101', 5, 'Object-Oriented Programming');
+
+-- Insert Lab Info
+INSERT INTO LAB_INFO (LAB_TITLE, DEADLINE) VALUES
+('Variables and Data Types', '2025-04-10'),
+('Control Flow and Loops', '2025-04-17'),
+('Functions and Modules', '2025-04-24'),
+('File Handling', '2025-05-01'),
+('Object-Oriented Programming', '2025-05-08');
 
 -- Insert Questions for Lab #1 (Variables and Data Types)
 INSERT INTO QUESTION (COURSE_CODE, LAB_NO, TASK_NO, QUESTION_TEXT) VALUES

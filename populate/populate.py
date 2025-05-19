@@ -39,8 +39,8 @@ def execute_sql_file(conn, cursor, file_path):
 def populate_teachers(conn, cursor):
     """Populate the TEACHER and TEACHER_COURSE tables."""
     teachers = [
-        (1, "Dr. Alice"),
-        (2, "Dr. Bob"),
+        (1, "Dr. Alice", "dralice@gmail.com", "password"),
+        (2, "Dr. Bob", "drbob@gmail.com", "password"),
     ]
     teacher_courses = [
         (1, "CS101"),
@@ -49,7 +49,7 @@ def populate_teachers(conn, cursor):
         (2, "CS104"),
     ]
     cursor.executemany(
-        "INSERT INTO TEACHER (TEACHER_ID, TEACHER_NAME) VALUES (%s, %s)",
+        "INSERT INTO TEACHER (TEACHER_ID, TEACHER_NAME, EMAIL, PASSWORD) VALUES (%s, %s, %s, %s)",
         teachers
     )
     cursor.executemany(
@@ -74,7 +74,8 @@ def populate_students(conn, cursor):
         student_name = fake.name()
         semester = f"{['Spring', 'Fall'][random.randint(0, 1)]}"
         roll_nos.add(roll_no)
-        students.append((roll_no, batch, student_name, semester))
+        students.append((roll_no, batch, student_name, semester,
+                        f"{student_name.replace(' ', '').lower()}@gmail.com", "password"))
 
         # Enroll students in courses
         if batch == 2021:
@@ -94,7 +95,7 @@ def populate_students(conn, cursor):
         student_courses.append((roll_no, additional_course))
 
     cursor.executemany(
-        "INSERT INTO STUDENT (ROLL_NO, BATCH, STUDENT_NAME, SEMESTER) VALUES (%s, %s, %s, %s)",
+        "INSERT INTO STUDENT (ROLL_NO, BATCH, STUDENT_NAME, SEMESTER, EMAIL, PASSWORD) VALUES (%s, %s, %s, %s, %s, %s)",
         students
     )
     cursor.executemany(

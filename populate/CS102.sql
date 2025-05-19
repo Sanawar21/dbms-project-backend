@@ -3,12 +3,20 @@ INSERT INTO COURSES (COURSE_CODE, COURSE_TITLE) VALUES
 ('CS102', 'Object Oriented Programming with Python');
 
 -- Insert Lab Tasks for CS102
-INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE, DEADLINE) VALUES
-('CS102', 1, 'Introduction to Classes and Objects', '2025-04-10'),
-('CS102', 2, 'Encapsulation and Data Hiding', '2025-04-17'),
-('CS102', 3, 'Inheritance and Polymorphism', '2025-04-24'),
-('CS102', 4, 'Abstract Classes and Interfaces', '2025-05-01'),
-('CS102', 5, 'File Handling with OOP', '2025-05-08');
+INSERT INTO LAB_TASK (COURSE_CODE, LAB_NO, LAB_TITLE) VALUES
+('CS102', 1, 'Introduction to Classes and Objects'),
+('CS102', 2, 'Encapsulation and Data Hiding'),
+('CS102', 3, 'Inheritance and Polymorphism'),
+('CS102', 4, 'Abstract Classes and Interfaces'),
+('CS102', 5, 'File Handling with OOP');
+
+-- Insert Lab Info
+INSERT INTO LAB_INFO (LAB_TITLE, DEADLINE) VALUES
+('Introduction to Classes and Objects', '2025-04-10'),
+('Encapsulation and Data Hiding', '2025-04-17'),
+('Inheritance and Polymorphism', '2025-04-24'),
+('Abstract Classes and Interfaces', '2025-05-01'),
+('File Handling with OOP', '2025-05-08');
 
 -- Insert Questions for Lab #1 (Introduction to Classes and Objects)
 INSERT INTO QUESTION (COURSE_CODE, LAB_NO, TASK_NO, QUESTION_TEXT) VALUES
