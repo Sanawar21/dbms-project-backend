@@ -1,81 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enrolled Students</title>
     <link rel="stylesheet" href="/static/std_list.css">
-    <script>
-        // Lab submission data
-        const labSubmissions = {
-            "101": ["Lab 1 - Submitted", "Lab 2 - Submitted", "Lab 3 - Pending"],
-            "102": ["Lab 1 - Submitted", "Lab 2 - Pending", "Lab 3 - Submitted"],
-            "103": ["Lab 1 - Pending", "Lab 2 - Submitted", "Lab 3 - Submitted"]
-        };
-
-        function updateLabStatus(studentId) {
-            const selectedLab = document.getElementById(`labSelect-${studentId}`).value;
-            document.getElementById(`labStatus-${studentId}`).innerText = selectedLab;
+    <style>
+        td span {
+            font-size: 1.2rem;
+            cursor: default;
         }
-    </script>
+
+        td span[title] {
+            border-bottom: 1px dotted #999;
+        }
+    </style>
 </head>
+
 <body>
     <header>
         <h1>Department of Computer & Information Sciences</h1>
     </header>
     <div class="container">
-        <h2>Enrolled Students</h2>
-        <table>
-            <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Submitted Lab Work</th>
-                <th>Status</th>
-            </tr>
-            <tr>
-                <td>101</td>
-                <td>John Doe</td>
-                <td>johndoe@example.com</td>
-                <td>
-                    <select id="labSelect-101" onchange="updateLabStatus('101')">
-                        <option value="">-- Select Lab --</option>
-                        <option value="Lab 1 - Submitted">Lab 1</option>
-                        <option value="Lab 2 - Submitted">Lab 2</option>
-                        <option value="Lab 3 - Pending">Lab 3</option>
-                    </select>
-                </td>
-                <td id="labStatus-101">--</td>
-            </tr>
-            <tr>
-                <td>102</td>
-                <td>Jane Smith</td>
-                <td>janesmith@example.com</td>
-                <td>
-                    <select id="labSelect-102" onchange="updateLabStatus('102')">
-                        <option value="">-- Select Lab --</option>
-                        <option value="Lab 1 - Submitted">Lab 1</option>
-                        <option value="Lab 2 - Pending">Lab 2</option>
-                        <option value="Lab 3 - Submitted">Lab 3</option>
-                    </select>
-                </td>
-                <td id="labStatus-102">--</td>
-            </tr>
-            <tr>
-                <td>103</td>
-                <td>Michael Brown</td>
-                <td>michaelbrown@example.com</td>
-                <td>
-                    <select id="labSelect-103" onchange="updateLabStatus('103')">
-                        <option value="">-- Select Lab --</option>
-                        <option value="Lab 1 - Pending">Lab 1</option>
-                        <option value="Lab 2 - Submitted">Lab 2</option>
-                        <option value="Lab 3 - Submitted">Lab 3</option>
-                    </select>
-                </td>
-                <td id="labStatus-103">--</td>
-            </tr>
+        <h2 class="course-title"></h2>
+        <h3>Enrolled Students</h3>
+        <table id="students-table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <!-- Lab headers will be inserted here -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Student rows will be inserted here -->
+            </tbody>
         </table>
     </div>
+
+    <script>
+        const courseCode = window.location.pathname.split("/")[2];  // e.g., /teacher/students/<course_code>
+
+
+
+        async function fetchStudents() {
+            const res = await fetch(`/api/teacher/students/${courseCode}`);
+            const data = await res.json();
+            if (!data.success) {
+                alert("Failed to load students.");
+                return;
+            }
+
+            const students = data.students;
+            if (students.length === 0) return;
+
+            // Group by student
+            const grouped = {};
+            const labSet = new Set();
+            students.forEach(entry => {
+                if (!grouped[entry.ROLL_NO]) {
+                    grouped[entry.ROLL_NO] = {
+                        name: entry.STUDENT_NAME,
+                        email: entry.EMAIL,
+                        labs: {}
+                    };
+                }
+                grouped[entry.ROLL_NO].labs[entry.LAB_NO] = entry.SUBMISSION_STATUS;
+                labSet.add(entry.LAB_NO);
+            });
+
+            const sortedLabs = Array.from(labSet).sort((a, b) => a - b);
+
+            // Add lab columns to header
+            const headerRow = document.querySelector("#students-table thead tr");
+            sortedLabs.forEach(labNo => {
+                const th = document.createElement("th");
+                th.textContent = `Lab ${labNo}`;
+                headerRow.appendChild(th);
+            });
+
+            const tbody = document.querySelector("#students-table tbody");
+
+            Object.entries(grouped).forEach(([roll, data]) => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${roll}</td>
+                    <td>${data.name}</td>
+                    <td>${data.email}</td>
+                `;
+
+                sortedLabs.forEach(labNo => {
+                    const status = data.labs[labNo];
+                    const td = document.createElement("td");
+                    let icon = "❓";
+                    let tooltip = "Not submitted";
+
+                    if (status === "Checked") {
+                        icon = "✅";
+                        tooltip = "Marked correct";
+                    } else if (status === "Submitted") {
+                        icon = "☑️";
+                        tooltip = "Pending review";
+                    }
+
+                    td.innerHTML = `<span title="${tooltip}">${icon}</span>`;
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadCourseTitle() {
+            try {
+                const response = await fetch(`/api/course_name/${courseCode}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.querySelector(".course-title").textContent = data.course_name;
+                    document.title = `Options - ${data.course_name}`;
+                } else {
+                    document.querySelector(".course-title").textContent = "Course Not Found";
+                }
+            } catch (err) {
+                document.querySelector(".course-title").textContent = "Error loading course";
+            }
+        }
+
+        loadCourseTitle();
+        fetchStudents();
+    </script>
 </body>
+
 </html>

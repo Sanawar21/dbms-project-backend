@@ -168,7 +168,7 @@ async def get_student_courses(roll_no: int):
         connection.close()
 
 
-@router.get("/course_name/{course_code}")
+@router.get("/api/course_name/{course_code}")
 async def get_course_name(course_code: str):
     # Connect to the database
     connection, cursor = get_db_connection_and_cursor()
@@ -317,6 +317,40 @@ async def submit_lab(
         connection.commit()
 
         return JSONResponse(content={"success": True, "redirect": f"/course/{course_code}"})
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.get("/api/teacher/students/{course_code}")
+async def get_students_by_course(course_code: str):
+    connection, cursor = get_db_connection_and_cursor()
+    # Get all students in the course, and for each student, get all labs and their submission status
+
+    try:
+        cursor.execute("""
+            SELECT 
+                s.ROLL_NO, 
+                s.STUDENT_NAME, 
+                s.EMAIL, 
+                l.LAB_NO, 
+                l.LAB_TITLE,
+                sub.status AS SUBMISSION_STATUS
+            FROM STUDENT s
+            JOIN STUDENT_COURSE sc ON s.ROLL_NO = sc.ROLL_NO
+            CROSS JOIN LAB_TASK l ON l.COURSE_CODE = sc.COURSE_CODE
+            LEFT JOIN SUBMISSION sub 
+                ON sub.ROLL_NO = s.ROLL_NO 
+                AND sub.COURSE_CODE = l.COURSE_CODE 
+                AND sub.LAB_NO = l.LAB_NO
+            WHERE sc.COURSE_CODE = %s
+            ORDER BY s.ROLL_NO, l.LAB_NO
+        """, (course_code,))
+
+        students = cursor.fetchall()
+
+        return JSONResponse(content={"success": True, "students": students})
 
     finally:
         cursor.close()

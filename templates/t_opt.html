@@ -31,9 +31,11 @@
     const parts = window.location.pathname.split("/");
     const courseCode = parts[2];  // Assumes URL is something like /course_options/<course_code>
 
+    document.querySelector('.option-card.yellow').href = `/teacher/${courseCode}/students`;
+
     async function loadCourseTitle() {
         try {
-            const response = await fetch(`/course_name/${courseCode}`);
+            const response = await fetch(`/api/course_name/${courseCode}`);
             const data = await response.json();
 
             if (data.success) {

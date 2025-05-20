@@ -84,8 +84,13 @@ async def course(request: Request):
 
 
 @app.get("/teacher/{course_id}", response_class=HTMLResponse)
-async def t_opt(request: Request):
+async def teacher_options(request: Request):
     return templates.TemplateResponse("t_opt.html", {"request": request})
+
+
+@app.get("/teacher/{course_id}/students")
+async def teacher_students(course_id, request: Request):
+    return templates.TemplateResponse("std_list.html", {"request": request, "students": students})
 
 
 @app.get("/t_lab", response_class=HTMLResponse)
