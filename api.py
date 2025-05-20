@@ -82,6 +82,7 @@ import mysql.connector
 #     TASK_NO INT(5),
 #     ROLL_NO INT(10),
 #     ANSWER_TEXT TEXT,
+#     IS_CORRECT BOOLEAN,
 #     PRIMARY KEY (COURSE_CODE, LAB_NO, TASK_NO, ROLL_NO),
 #     FOREIGN KEY (COURSE_CODE, LAB_NO, TASK_NO) REFERENCES QUESTION(COURSE_CODE, LAB_NO, TASK_NO) ON DELETE CASCADE,
 #     FOREIGN KEY (ROLL_NO) REFERENCES STUDENT(ROLL_NO) ON DELETE CASCADE
@@ -200,19 +201,26 @@ async def get_current_user(request: Request):
 
 
 @router.get("/api/course_labs/{course_code}")
-async def get_course_labs(course_code: str):
-    # Connect to the database
+async def get_course_labs(course_code: str, request: Request):
     connection, cursor = get_db_connection_and_cursor()
+    roll_no = request.session.get("user")["ROLL_NO"]
 
     try:
-        # Fetch labs for the course
         cursor.execute("""
-          SELECT l.*, c.COURSE_TITLE FROM Lab_Task l
-          JOIN Courses c ON l.COURSE_CODE = c.COURSE_CODE
-          WHERE l.COURSE_CODE = %s
-        """, (course_code,))
-        labs = cursor.fetchall()
+            SELECT 
+                l.*, 
+                c.COURSE_TITLE,
+                s.STATUS AS SUBMISSION_STATUS
+            FROM Lab_Task l
+            JOIN Courses c ON l.COURSE_CODE = c.COURSE_CODE
+            LEFT JOIN Submission s 
+                ON s.COURSE_CODE = l.COURSE_CODE 
+               AND s.LAB_NO = l.LAB_NO 
+               AND s.ROLL_NO = %s
+            WHERE l.COURSE_CODE = %s
+        """, (roll_no, course_code))
 
+        labs = cursor.fetchall()
         return labs
 
     finally:
@@ -221,19 +229,33 @@ async def get_course_labs(course_code: str):
 
 
 @router.get("/api/lab_tasks/{course_code}/{lab_no}")
-async def get_lab_tasks(course_code: str, lab_no: int):
+async def get_lab_tasks(course_code: str, lab_no: int, request: Request):
     connection, cursor = get_db_connection_and_cursor()
+    roll_no = request.session.get("user")["ROLL_NO"]
+
     try:
+        # Get questions with submission and answer status
         cursor.execute("""
-            SELECT q.TASK_NO, q.QUESTION_TEXT, c.COURSE_TITLE, l.LAB_TITLE
+            SELECT 
+                q.TASK_NO, 
+                q.QUESTION_TEXT, 
+                c.COURSE_TITLE, 
+                l.LAB_TITLE,
+                s.STATUS AS SUBMISSION_STATUS,
+                a.ANSWER_TEXT,
+                a.IS_CORRECT
             FROM QUESTION q
             JOIN COURSES c ON q.COURSE_CODE = c.COURSE_CODE
             JOIN LAB_TASK l ON q.COURSE_CODE = l.COURSE_CODE AND q.LAB_NO = l.LAB_NO
+            LEFT JOIN SUBMISSION s ON s.COURSE_CODE = q.COURSE_CODE AND s.LAB_NO = q.LAB_NO AND s.ROLL_NO = %s
+            LEFT JOIN ANSWER a ON a.COURSE_CODE = q.COURSE_CODE AND a.LAB_NO = q.LAB_NO AND a.TASK_NO = q.TASK_NO AND a.ROLL_NO = %s
             WHERE q.COURSE_CODE = %s AND q.LAB_NO = %s
             ORDER BY q.TASK_NO ASC
-        """, (course_code, lab_no))
+        """, (roll_no, roll_no, course_code, lab_no))
+
         tasks = cursor.fetchall()
         return JSONResponse(content={"success": True, "questions": tasks})
+
     finally:
         cursor.close()
         connection.close()

@@ -49,6 +49,7 @@
                 labCard.innerHTML = `
                     <h4>Lab # ${lab.LAB_NO}</h4>
                     <p class="lab-title">${lab.LAB_TITLE}</p>
+                    <p class="lab-title">Status: ${lab.SUBMISSION_STATUS !== null ? lab.SUBMISSION_STATUS : 'Missing'}</p>
                 `;
                 labList.appendChild(labCard);
             });

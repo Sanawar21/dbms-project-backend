@@ -61,9 +61,6 @@
         document.getElementById("lab-no").textContent = labNo;
         document.title = `Lab Task - ${courseCode}`;
 
-        // const form = document.getElementById("lab-form");
-        // form.action = `/submit_lab/${courseCode}/${labNo}`;
-
         async function loadQuestions() {
             const response = await fetch(`/api/lab_tasks/${courseCode}/${labNo}`);
             const data = await response.json();
@@ -75,10 +72,10 @@
 
             const courseName = data.questions[0].COURSE_TITLE;
             const labTitle = data.questions[0].LAB_TITLE;
-            Array.from(document.getElementsByClassName("lab-title")).forEach((val) => val.textContent = labTitle);
+            const submissionStatus = data.questions[0].SUBMISSION_STATUS;
 
-            Array.from(document.getElementsByClassName("course-name")).forEach((val) => val.textContent = courseName);
-            // document.getElementById("course-name").textContent = courseName;
+            document.querySelectorAll(".course-name").forEach(el => el.textContent = courseName);
+            document.querySelectorAll(".lab-title").forEach(el => el.textContent = labTitle);
 
             const taskList = document.getElementById("task-list");
 
@@ -86,17 +83,41 @@
                 const div = document.createElement("div");
                 div.className = "task-item";
 
-                div.innerHTML = `
-                    <p class="question"><strong>Q${index + 1}:</strong> ${q.QUESTION_TEXT}</p>
+                let html = `<p class="question"><strong>Q${index + 1}:</strong> ${q.QUESTION_TEXT}</p>`;
+
+                if (!submissionStatus) {
+                    // Allow submission
+                    html += `
                     <textarea class="answer-box" name="answer_${q.TASK_NO}" placeholder="Write your answer here..." required></textarea>
                 `;
+                } else if (submissionStatus === "Submitted") {
+                    html += `
+                    <p><strong>Your Answer:</strong></p>
+                    <div class="submitted-answer">${q.ANSWER_TEXT || "Not Answered"}</div>
+                `;
+                } else if (submissionStatus === "Checked") {
+                    const correctness = q.IS_CORRECT === 1 ? "✅ Correct" : "❌ Incorrect";
+                    html += `
+                    <p><strong>Your Answer:</strong></p>
+                    <div class="submitted-answer">${q.ANSWER_TEXT || "Not Answered"}</div>
+                    <p class="check-status">${correctness}</p>
+                `;
+                }
 
+                div.innerHTML = html;
                 taskList.appendChild(div);
             });
+
+            // Remove submit button if already submitted or checked
+            if (submissionStatus) {
+                const btn = document.querySelector(".submit-btn");
+                if (btn) btn.remove();
+            }
         }
 
         loadQuestions();
     </script>
+
 </body>
 
 </html>
