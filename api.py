@@ -1,8 +1,8 @@
 # api.py
-from fastapi import APIRouter, Request
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, Request, Depends
 from fastapi.responses import JSONResponse
-from fastapi import Depends
+from typing import Annotated
+from starlette.requests import Request
 
 import os
 import mysql.connector
@@ -234,6 +234,47 @@ async def get_lab_tasks(course_code: str, lab_no: int):
         """, (course_code, lab_no))
         tasks = cursor.fetchall()
         return JSONResponse(content={"success": True, "questions": tasks})
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.post("/api/submit_lab")
+async def submit_lab(
+    request: Request,
+    course_code: str = Form(...),
+    lab_no: int = Form(...)
+):
+    connection, cursor = get_db_connection_and_cursor()
+
+    try:
+        roll_no = request.session.get("user")["ROLL_NO"]
+        if not roll_no:
+            return JSONResponse(content={"success": False, "message": "User not logged in"}, status_code=401)
+
+        form_data = await request.form()
+        # Extract answers in order: answer_1, answer_2, ...
+        answers = []
+        for key in sorted(form_data.keys(), key=lambda k: int(k.split('_')[1]) if k.startswith('answer_') and k.split('_')[1].isdigit() else 0):
+            if key.startswith('answer_'):
+                answers.append(form_data[key])
+        # Now 'answers' is a list of answer strings in order
+
+        cursor.execute("""
+            INSERT INTO SUBMISSION (COURSE_CODE, ROLL_NO, LAB_NO, STATUS, SUBMISSION_DATE)
+            VALUES (%s, %s, %s, 'Submitted', NOW())
+        """, (course_code, roll_no, lab_no))
+
+        for task_no, answer in enumerate(answers, start=1):
+            cursor.execute("""
+                INSERT INTO ANSWER (COURSE_CODE, LAB_NO, TASK_NO, ROLL_NO, ANSWER_TEXT)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (course_code, lab_no, task_no, roll_no, answer))
+
+        connection.commit()
+
+        return JSONResponse(content={"success": True, "redirect": f"/course/{course_code}"})
+
     finally:
         cursor.close()
         connection.close()

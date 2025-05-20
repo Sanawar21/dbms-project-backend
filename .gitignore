@@ -178,3 +178,4 @@ cython_debug/
 prota/
 prota.zip
 test.py
+dev.session.sql
