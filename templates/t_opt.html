@@ -32,6 +32,7 @@
     const courseCode = parts[2];  // Assumes URL is something like /course_options/<course_code>
 
     document.querySelector('.option-card.yellow').href = `/teacher/${courseCode}/students`;
+    document.querySelector('.option-card.blue').href = `/teacher/${courseCode}/labs`;
 
     async function loadCourseTitle() {
         try {

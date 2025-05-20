@@ -1,4 +1,5 @@
 # api.py
+from fastapi import Body
 from fastapi import APIRouter, Form, Request, Depends
 from fastapi.responses import JSONResponse
 from typing import Annotated
@@ -249,6 +250,28 @@ async def get_course_labs(course_code: str, request: Request):
         connection.close()
 
 
+@router.get("/api/teacher/course_labs/{course_code}")
+async def get_teacher_course_labs(course_code: str):
+    connection, cursor = get_db_connection_and_cursor()
+
+    try:
+        cursor.execute("""
+            SELECT 
+                l.*, 
+                c.COURSE_TITLE
+            FROM Lab_Task l
+            JOIN Courses c ON l.COURSE_CODE = c.COURSE_CODE
+            WHERE l.COURSE_CODE = %s
+        """, (course_code,))
+
+        labs = cursor.fetchall()
+        return labs
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @router.get("/api/lab_tasks/{course_code}/{lab_no}")
 async def get_lab_tasks(course_code: str, lab_no: int, request: Request):
     connection, cursor = get_db_connection_and_cursor()
@@ -351,6 +374,103 @@ async def get_students_by_course(course_code: str):
         students = cursor.fetchall()
 
         return JSONResponse(content={"success": True, "students": students})
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.get("/api/submissions/{course_code}/{lab_no}")
+async def get_lab_submissions(course_code: str, lab_no: int):
+    connection, cursor = get_db_connection_and_cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                s.ROLL_NO,
+                s.STUDENT_NAME,
+                s.EMAIL,
+                lt.LAB_TITLE,
+                q.TASK_NO,
+                q.QUESTION_TEXT,
+                a.ANSWER_TEXT,
+                a.IS_CORRECT
+            FROM STUDENT s
+            JOIN SUBMISSION sub ON s.ROLL_NO = sub.ROLL_NO
+            JOIN ANSWER a ON s.ROLL_NO = a.ROLL_NO 
+                          AND a.COURSE_CODE = sub.COURSE_CODE 
+                          AND a.LAB_NO = sub.LAB_NO
+            JOIN QUESTION q ON q.COURSE_CODE = a.COURSE_CODE 
+                           AND q.LAB_NO = a.LAB_NO 
+                           AND q.TASK_NO = a.TASK_NO
+            JOIN LAB_TASK lt ON lt.COURSE_CODE = sub.COURSE_CODE AND lt.LAB_NO = sub.LAB_NO
+            WHERE sub.COURSE_CODE = %s AND sub.LAB_NO = %s
+            ORDER BY s.ROLL_NO, q.TASK_NO
+        """, (course_code, lab_no))
+
+        rows = cursor.fetchall()
+        grouped = {}
+
+        for row in rows:
+            roll_no = row["ROLL_NO"]
+            if roll_no not in grouped:
+                grouped[roll_no] = {
+                    "ROLL_NO": roll_no,
+                    "STUDENT_NAME": row["STUDENT_NAME"],
+                    "EMAIL": row["EMAIL"],
+                    "LAB_TITLE": row["LAB_TITLE"],
+                    "questions": []
+                }
+
+            grouped[roll_no]["questions"].append({
+                "TASK_NO": row["TASK_NO"],
+                "QUESTION_TEXT": row["QUESTION_TEXT"],
+                "ANSWER_TEXT": row["ANSWER_TEXT"],
+                "IS_CORRECT": row["IS_CORRECT"]
+            })
+
+        return {"success": True, "submissions": list(grouped.values())}
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.post("/api/check_submission")
+async def check_submission(data: dict = Body(...)):
+    results = data.get("results", [])
+    if not results:
+        return {"success": False, "message": "No data provided."}
+
+    connection, cursor = get_db_connection_and_cursor()
+    try:
+        updated = set()
+        for entry in results:
+            cursor.execute("""
+                UPDATE ANSWER
+                SET IS_CORRECT = %s
+                WHERE ROLL_NO = %s AND COURSE_CODE = %s AND LAB_NO = %s AND TASK_NO = %s
+            """, (
+                entry["is_correct"],
+                entry["roll_no"],
+                entry["course_code"],
+                entry["lab_no"],
+                entry["task_no"]
+            ))
+
+            # Track which (ROLL_NO, COURSE_CODE, LAB_NO) to update in SUBMISSION table
+            updated.add(
+                (entry["roll_no"], entry["course_code"], entry["lab_no"]))
+
+        # Update submission status for all students who were checked
+        for roll_no, course_code, lab_no in updated:
+            cursor.execute("""
+                UPDATE SUBMISSION
+                SET STATUS = 'Checked'
+                WHERE ROLL_NO = %s AND COURSE_CODE = %s AND LAB_NO = %s
+            """, (roll_no, course_code, lab_no))
+
+        connection.commit()
+        return {"success": True, "message": "Submissions checked successfully."}
 
     finally:
         cursor.close()

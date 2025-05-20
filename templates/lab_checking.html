@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Check Submissions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/lab_task.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="course-info">
+      <h2 id="course-title"></h2>
+      <p><strong>Lab #<span id="lab-no"></span>: <span id="lab-title"></span></strong></p>
+      <p id="student-name"></p>
+    </div>
+
+    <form id="check-form" method="post">
+      <div class="task-list" id="task-list">
+        <!-- Questions dynamically inserted here -->
+      </div>
+
+      <div class="navigation">
+        <button type="button" id="prev-btn">&larr; Previous</button>
+        <button type="button" id="next-btn">Next &rarr;</button>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Check</button>
+    </form>
+  </div>
+
+  <script>
+    const parts = window.location.pathname.split("/");
+    const courseCode = parts[3];
+    const labNo = parts[4];
+
+    document.getElementById("course-title").textContent = `Course: ${courseCode}`;
+    document.getElementById("lab-no").textContent = labNo;
+
+    let submissions = [];
+    let currentIndex = 0;
+
+    async function fetchSubmissions() {
+      const res = await fetch(`/api/submissions/${courseCode}/${labNo}`);
+      const data = await res.json();
+      submissions = data.submissions || [];
+      loadStudent();
+    }
+
+    function loadStudent() {
+      const student = submissions[currentIndex];
+      document.getElementById("student-name").textContent = `Student: ${student.STUDENT_NAME} (${student.ROLL_NO})`;
+      document.getElementById("lab-title").textContent = student.LAB_TITLE;
+      const taskList = document.getElementById("task-list");
+      taskList.innerHTML = "";
+
+      student.questions.forEach((q, index) => {
+        const div = document.createElement("div");
+        div.className = "task-item";
+
+        div.innerHTML = `
+                    <p><strong>Q${index + 1}:</strong> ${q.QUESTION_TEXT}</p>
+                    <p><strong>Answer:</strong></p>
+                    <div class="submitted-answer">${q.ANSWER_TEXT || "Not Answered"}</div>
+                    <div class="marking">
+                        <label><input type="radio" name="q_${q.TASK_NO}" value="1" ${q.IS_CORRECT === 1 ? "checked" : ""}> ✅ Correct</label>
+                        <label><input type="radio" name="q_${q.TASK_NO}" value="0" ${q.IS_CORRECT === 0 ? "checked" : ""}> ❌ Incorrect</label>
+                    </div>
+                `;
+        taskList.appendChild(div);
+      });
+    }
+
+    document.getElementById("prev-btn").addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        loadStudent();
+      }
+    });
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+      if (currentIndex < submissions.length - 1) {
+        currentIndex++;
+        loadStudent();
+      }
+    });
+
+    document.getElementById("check-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const student = submissions[currentIndex];
+      const formData = new FormData(e.target);
+      const result = [];
+
+      student.questions.forEach(q => {
+        const correctness = formData.get(`q_${q.TASK_NO}`);
+        if (correctness !== null) {
+          result.push({
+            roll_no: student.ROLL_NO,
+            course_code: courseCode,
+            lab_no: labNo,
+            task_no: q.TASK_NO,
+            is_correct: parseInt(correctness)
+          });
+        }
+      });
+
+      const response = await fetch("/api/check_submission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ results: result })
+      });
+
+      const json = await response.json();
+      alert(json.success ? "Marked successfully!" : "Check failed.");
+    });
+
+    fetchSubmissions();
+  </script>
+</body>
+
+</html>

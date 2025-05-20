@@ -93,6 +93,16 @@ async def teacher_students(course_id, request: Request):
     return templates.TemplateResponse("std_list.html", {"request": request, "students": students})
 
 
+@app.get("/teacher/{course_id}/labs")
+async def teacher_labs(course_id, request: Request):
+    return templates.TemplateResponse("t_lab.html", {"request": request, "labs": labs})
+
+
+@app.get("/teacher/checking/{course_code}/{lab_no}")
+async def teacher_checking(course_code, lab_no, request: Request):
+    return templates.TemplateResponse("lab_checking.html", {"request": request})
+
+
 @app.get("/t_lab", response_class=HTMLResponse)
 async def t_lab(request: Request):
     labs_with_course = []
@@ -101,11 +111,6 @@ async def t_lab(request: Request):
             (c for c in courses if c['id'] == lab['course_id']), None)
         labs_with_course.append({"lab": lab, "course": course})
     return templates.TemplateResponse("t_lab.html", {"request": request, "labs": labs_with_course})
-
-
-@app.get("/std_list", response_class=HTMLResponse)
-async def std_list(request: Request):
-    return templates.TemplateResponse("std_list.html", {"request": request, "students": students})
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

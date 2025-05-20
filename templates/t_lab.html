@@ -1,36 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Available Labs</title>
-    <link rel="stylesheet" href="/static/t_lab.css">
+    <title id="page-title">Course - Labs</title>
+    <link rel="stylesheet" href="/static/coursestyles.css">
 </head>
+
 <body>
+    <div class="header">
+        <h1>Department of Computer & Information Engineering</h1>
+    </div>
 
-    <!-- Header Section -->
-    <header>
-        <h1>Department of Computer & Information Sciences</h1>
-    </header>
-
-    <!-- Main Content -->
     <div class="container">
-        <h3>Course Code:</h3>
-        <h2>Available Labs</h2>
-        <div class="snowflake">❄</div>
+        <div class="course-info">
+            <h2><span id="course-name"></span></h2>
+            <p> <span id="course-code"></span></p>
+        </div>
 
-        <!-- Lab Cards -->
-        <div class="lab-list">
-            <div class="lab-card">Lab No 1</div>
-            <div class="lab-card">Lab No 2</div>
-            <div class="lab-card">Lab No 3</div>
-            <div class="lab-card">Lab No 4</div>
-            <div class="lab-card">Lab No 5</div>
-            <div class="lab-card">Lab No 6</div>
-            <div class="lab-card">Lab No 7</div>
-            <div class="lab-card">Lab No 8</div>
+        <h3 class="section-title">Available Labs</h3>
+        <div class="lab-list" id="lab-list">
+            <!-- Labs will be inserted here -->
         </div>
     </div>
 
+    <script>
+        const courseCode = window.location.pathname.split("/")[2];  // Extract course_code from URL
+
+
+        document.getElementById("course-code").textContent = courseCode;
+
+        async function fetchLabs() {
+            const response = await fetch(`/api/teacher/course_labs/${courseCode}`);
+            const labs = await response.json();
+
+            const labList = document.getElementById("lab-list");
+
+            if (labs.length === 0) {
+                labList.innerHTML = "<p>No labs found for this course.</p>";
+                return;
+            }
+
+            labs.forEach(lab => {
+                const labCard = document.createElement("div");
+                labCard.className = "lab-card";
+                labCard.onclick = () => openLab(courseCode, lab.LAB_NO);
+                labCard.innerHTML = `
+                    <h4>Lab # ${lab.LAB_NO}</h4>
+                    <p class="lab-title">${lab.LAB_TITLE}</p>
+                `;
+                labList.appendChild(labCard);
+            });
+
+            // Set course title from the first lab title prefix, or fallback
+            document.getElementById("course-name").textContent = labs[0].COURSE_TITLE;
+            document.title = `${labs[0]?.COURSE_CODE || "Course"} - Labs`;
+        }
+
+        function openLab(courseId, labNo) {
+            window.location.href = `/teacher/checking/${courseId}/${labNo}`;
+        }
+
+        fetchLabs();
+    </script>
 </body>
+
 </html>
