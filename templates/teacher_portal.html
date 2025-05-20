@@ -93,6 +93,11 @@
                         <h4>${course.COURSE_TITLE}</h4>
                         <p>${course.COURSE_CODE}</p>
                     `;
+
+                    courseDiv.onclick = () => {
+                        window.location.href = `/teacher/${course.COURSE_CODE}`;
+                    };
+
                     container.appendChild(courseDiv);
                 });
             } else {

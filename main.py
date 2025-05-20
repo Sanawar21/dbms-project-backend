@@ -83,15 +83,7 @@ async def course(request: Request):
     return templates.TemplateResponse("teacher_course.html", {"request": request, "courses": courses})
 
 
-@app.post("/submit_lab/{course_id}/{lab_id}")
-async def submit_lab(course_id: int, lab_id: int, request: Request):
-    form_data = await request.form()
-    answers = dict(form_data)
-    print("User Answers:", answers)
-    return RedirectResponse(url="/", status_code=302)
-
-
-@app.get("/t_opt", response_class=HTMLResponse)
+@app.get("/teacher/{course_id}", response_class=HTMLResponse)
 async def t_opt(request: Request):
     return templates.TemplateResponse("t_opt.html", {"request": request})
 

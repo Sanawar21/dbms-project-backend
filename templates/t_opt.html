@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Options</title>
-    <link rel="stylesheet" href="static/teacher_opt.css">
+    <link rel="stylesheet" href="../static/teacher_opt.css">
 </head>
+
 <body>
 
     <div class="header">
-        <h1>Select an Option</h1>
+        <h2 color="blue" class="course-title"></h2>
+        <h3>Select an Option</h3>
     </div>
 
     <div class="buttons-container">
@@ -17,10 +20,35 @@
             <p>STUDENTS</p>
         </a>
         <a href="#" class="option-card blue">
-     
+
             <p>LABS</p>
         </a>
     </div>
 
 </body>
+
+<script>
+    const parts = window.location.pathname.split("/");
+    const courseCode = parts[2];  // Assumes URL is something like /course_options/<course_code>
+
+    async function loadCourseTitle() {
+        try {
+            const response = await fetch(`/course_name/${courseCode}`);
+            const data = await response.json();
+
+            if (data.success) {
+                document.querySelector(".course-title").textContent = data.course_name;
+                document.title = `Options - ${data.course_name}`;
+            } else {
+                document.querySelector(".course-title").textContent = "Course Not Found";
+            }
+        } catch (err) {
+            document.querySelector(".course-title").textContent = "Error loading course";
+        }
+    }
+
+    loadCourseTitle();
+</script>
+
+
 </html>

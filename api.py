@@ -168,6 +168,27 @@ async def get_student_courses(roll_no: int):
         connection.close()
 
 
+@router.get("/course_name/{course_code}")
+async def get_course_name(course_code: str):
+    # Connect to the database
+    connection, cursor = get_db_connection_and_cursor()
+
+    try:
+        # Fetch course name
+        cursor.execute(
+            "SELECT COURSE_TITLE FROM Courses WHERE COURSE_CODE = %s", (course_code,))
+        course = cursor.fetchone()
+
+        if course:
+            return JSONResponse(content={"success": True, "course_name": course["COURSE_TITLE"]})
+        else:
+            return JSONResponse(content={"success": False, "message": "Course not found"}, status_code=404)
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @router.get("/api/teacher_courses/{teacher_id}")
 async def get_teacher_courses(teacher_id: int):
     # Connect to the database
