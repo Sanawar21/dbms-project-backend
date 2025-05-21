@@ -36,7 +36,17 @@
     const courseCode = parts[3];
     const labNo = parts[4];
 
-    document.getElementById("course-title").textContent = `Course: ${courseCode}`;
+    fetch(`/api/course_name/${courseCode}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("course-title").textContent = `${data.course_name} (${courseCode})`;
+        } else {
+          document.getElementById("course-title").textContent = `Course: ${courseCode}`;
+        }
+      });
+
+
     document.getElementById("lab-no").textContent = labNo;
 
     let submissions = [];

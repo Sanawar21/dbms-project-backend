@@ -33,8 +33,8 @@ async def course_labs(course_code, request: Request):
     return templates.TemplateResponse("course_labs.html", {"request": request})
 
 
-@app.get("/course/{course_id}/lab/{lab_id}", response_class=HTMLResponse)
-async def lab_task(course_id, lab_id, request: Request):
+@app.get("/course/{course_code}/lab/{lab_id}", response_class=HTMLResponse)
+async def lab_task(course_code, lab_id, request: Request):
     return templates.TemplateResponse("lab_task.html", {"request": request})
 
 
@@ -43,21 +43,26 @@ async def course(request: Request):
     return templates.TemplateResponse("teacher_course.html", {"request": request})
 
 
-@app.get("/teacher/{course_id}", response_class=HTMLResponse)
+@app.get("/teacher/{course_code}", response_class=HTMLResponse)
 async def teacher_options(request: Request):
     return templates.TemplateResponse("t_opt.html", {"request": request})
 
 
-@app.get("/teacher/{course_id}/students")
-async def teacher_students(course_id, request: Request):
+@app.get("/teacher/{course_code}/students")
+async def teacher_students(course_code, request: Request):
     return templates.TemplateResponse("std_list.html", {"request": request})
 
 
-@app.get("/teacher/{course_id}/labs")
-async def teacher_labs(course_id, request: Request):
+@app.get("/teacher/{course_code}/labs")
+async def teacher_labs(course_code, request: Request):
     return templates.TemplateResponse("t_lab.html", {"request": request})
 
 
 @app.get("/teacher/checking/{course_code}/{lab_no}")
 async def teacher_checking(course_code, lab_no, request: Request):
     return templates.TemplateResponse("lab_checking.html", {"request": request})
+
+
+@app.get("/teacher/checking/student/{course_code}/{student_id}")
+async def teacher_student(course_code, student_id, request: Request):
+    return templates.TemplateResponse("t_std.html", {"request": request})

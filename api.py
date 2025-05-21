@@ -477,3 +477,78 @@ async def check_submission(data: dict = Body(...)):
     finally:
         cursor.close()
         connection.close()
+
+
+@router.get("/api/student/all_labs/{roll_no}/{course_code}")
+async def get_all_labs_of_student(roll_no: int, course_code: str):
+    connection, cursor = get_db_connection_and_cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                s.ROLL_NO,
+                s.STUDENT_NAME,
+                s.EMAIL,
+                sub.STATUS AS SUBMISSION_STATUS,
+                lt.LAB_TITLE,
+                lt.LAB_NO,
+                q.TASK_NO,
+                q.QUESTION_TEXT,
+                a.ANSWER_TEXT,
+                a.IS_CORRECT
+            FROM STUDENT s
+            LEFT JOIN LAB_TASK lt 
+                ON lt.COURSE_CODE = %s
+            LEFT JOIN SUBMISSION sub 
+                ON s.ROLL_NO = sub.ROLL_NO 
+                AND sub.COURSE_CODE = lt.COURSE_CODE 
+                AND sub.LAB_NO = lt.LAB_NO
+            LEFT JOIN QUESTION q 
+                ON q.COURSE_CODE = lt.COURSE_CODE 
+                AND q.LAB_NO = lt.LAB_NO
+            LEFT JOIN ANSWER a 
+                ON a.ROLL_NO = s.ROLL_NO 
+                AND a.COURSE_CODE = q.COURSE_CODE 
+                AND a.LAB_NO = q.LAB_NO 
+                AND a.TASK_NO = q.TASK_NO
+            WHERE s.ROLL_NO = %s AND lt.COURSE_CODE = %s
+            ORDER BY lt.LAB_NO, q.TASK_NO
+        """, (course_code, roll_no, course_code))
+
+        rows = cursor.fetchall()
+
+        result = {
+            "ROLL_NO": roll_no,
+            "STUDENT_NAME": None,
+            "EMAIL": None,
+            "labs": {}
+        }
+
+        for row in rows:
+            if result["STUDENT_NAME"] is None:
+                result["STUDENT_NAME"] = row["STUDENT_NAME"]
+                result["EMAIL"] = row["EMAIL"]
+
+            lab_key = (row["LAB_NO"], row["LAB_TITLE"])
+            if lab_key not in result["labs"]:
+                result["labs"][lab_key] = {
+                    "LAB_NO": row["LAB_NO"],
+                    "LAB_TITLE": row["LAB_TITLE"],
+                    "SUBMISSION_STATUS": row["SUBMISSION_STATUS"],
+                    "questions": []
+                }
+
+            result["labs"][lab_key]["questions"].append({
+                "TASK_NO": row["TASK_NO"],
+                "QUESTION_TEXT": row["QUESTION_TEXT"],
+                "ANSWER_TEXT": row["ANSWER_TEXT"],
+                "IS_CORRECT": row["IS_CORRECT"]
+            })
+
+        # Convert dict to list for JSON response
+        result["labs"] = list(result["labs"].values())
+
+        return {"success": True, "student_data": result}
+
+    finally:
+        cursor.close()
+        connection.close()

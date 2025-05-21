@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Check Student Submissions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/static/lab_task.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="course-info">
+      <h2 id="course-title"></h2>
+      <p id="student-name"></p>
+    </div>
+
+    <form id="check-form" method="post">
+      <div id="lab-container"></div>
+      <button type="submit" class="submit-btn">Submit Checked Answers</button>
+    </form>
+
+    <p id="no-data" class="notice" style="display: none;">No data found for this student.</p>
+  </div>
+
+  <script>
+    const parts = window.location.pathname.split("/");
+    const rollNo = parts[5];
+    const courseCode = parts[4];
+    const labTaskCounts = {};
+
+    fetch(`/api/course_name/${courseCode}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("course-title").textContent = `${data.course_name} (${courseCode})`;
+        } else {
+          document.getElementById("course-title").textContent = `Course: ${courseCode}`;
+        }
+      });
+
+    async function fetchStudentData() {
+      const res = await fetch(`/api/student/all_labs/${rollNo}/${courseCode}`);
+      const data = await res.json();
+
+      if (!data.success || !data.student_data) {
+        document.getElementById("no-data").style.display = "block";
+        return;
+      }
+
+      const student = data.student_data;
+      document.getElementById("student-name").textContent = `Student: ${student.STUDENT_NAME} (${student.ROLL_NO})`;
+
+      const labContainer = document.getElementById("lab-container");
+      labContainer.innerHTML = "";
+
+      student.labs.forEach((lab, labIndex) => {
+        const labDiv = document.createElement("div");
+        labDiv.className = "lab-section";
+        labTaskCounts[lab.LAB_NO] = lab.questions.length;
+
+        labDiv.innerHTML += `
+          <h3>Lab #${lab.LAB_NO}: ${lab.LAB_TITLE} 
+            <span class="status ${lab.SUBMISSION_STATUS === "Submitted" ? "submitted" : "not-submitted"}">
+              [${lab.SUBMISSION_STATUS || "Not Submitted"}]
+            </span>
+          </h3>
+        `;
+
+        if (!lab.questions || lab.questions.length === 0) {
+          labDiv.innerHTML += `<p class="notice">No questions found for this lab.</p>`;
+        } else {
+          lab.questions.forEach((q, qIndex) => {
+            const answerText = q.ANSWER_TEXT ?? "";
+            const correctChecked = q.IS_CORRECT === 1 ? "checked" : "";
+            const incorrectChecked = q.IS_CORRECT === 0 ? "checked" : "";
+
+            labDiv.innerHTML += `
+              <div class="task-item">
+                <p><strong>Q${qIndex + 1}:</strong> ${q.QUESTION_TEXT}</p>
+                <p><strong>Answer:</strong></p>
+                <div class="submitted-answer">${answerText || "<i>Not Answered</i>"}</div>
+                <div class="marking" style="visibility: ${lab.SUBMISSION_STATUS === "Submitted" || lab.SUBMISSION_STATUS === "Checked" ? "visible" : "hidden"};">
+                  <label><input type="radio" name="q_${lab.LAB_NO}_${q.TASK_NO}" value="1" ${correctChecked}> ✅ Correct</label>
+                  <label><input type="radio" name="q_${lab.LAB_NO}_${q.TASK_NO}" value="0" ${incorrectChecked}> ❌ Incorrect</label>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        labContainer.appendChild(labDiv);
+      });
+    }
+
+    document.getElementById("check-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const grouped = {};  // lab_no => list of answers
+
+      for (let [key, value] of formData.entries()) {
+        const match = key.match(/^q_(\d+)_(\d+)$/); // q_lab_task
+        if (!match) continue;
+
+        const lab_no = parseInt(match[1]);
+        const task_no = parseInt(match[2]);
+
+        if (!grouped[lab_no]) grouped[lab_no] = [];
+
+        grouped[lab_no].push({
+          roll_no: rollNo,
+          course_code: courseCode,
+          lab_no: lab_no,
+          task_no: task_no,
+          is_correct: parseInt(value),
+        });
+      }
+
+      // Only keep labs where all tasks are marked
+      const result = [];
+      for (let lab_no in grouped) {
+        const expectedCount = labTaskCounts[lab_no];  // Must be defined above
+        if (grouped[lab_no].length === expectedCount) {
+          result.push(...grouped[lab_no]);
+        }
+      }
+
+      if (result.length === 0) {
+        alert("Please mark all tasks for at least one lab before submitting.");
+        return;
+      }
+
+      const res = await fetch("/api/check_submission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ results: result }),
+      });
+
+      const json = await res.json();
+      alert(json.success ? "Marked successfully!" : "Check failed.");
+    });
+
+
+    fetchStudentData();
+  </script>
+
+  <style>
+    .status.submitted {
+      color: green;
+      font-weight: bold;
+    }
+
+    .status.not-submitted {
+      color: red;
+      font-weight: bold;
+    }
+
+    .lab-section {
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin-bottom: 1.5em;
+      border-radius: 8px;
+    }
+
+    .task-item {
+      padding: 0.5em;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</body>
+
+</html>
