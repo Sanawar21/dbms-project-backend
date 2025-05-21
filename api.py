@@ -389,6 +389,7 @@ async def get_lab_submissions(course_code: str, lab_no: int):
                 s.ROLL_NO,
                 s.STUDENT_NAME,
                 s.EMAIL,
+                sub.STATUS AS SUBMISSION_STATUS,
                 lt.LAB_TITLE,
                 q.TASK_NO,
                 q.QUESTION_TEXT,
@@ -418,6 +419,7 @@ async def get_lab_submissions(course_code: str, lab_no: int):
                     "STUDENT_NAME": row["STUDENT_NAME"],
                     "EMAIL": row["EMAIL"],
                     "LAB_TITLE": row["LAB_TITLE"],
+                    "SUBMISSION_STATUS": row["SUBMISSION_STATUS"],
                     "questions": []
                 }
 

@@ -151,3 +151,10 @@ input[type="radio"] {
     font-weight: bold;
     color: #2c7a00;
 }
+
+.notice {
+  font-size: 16px;
+  color: #a00;
+  text-align: center;
+  margin: 20px 0;
+}
