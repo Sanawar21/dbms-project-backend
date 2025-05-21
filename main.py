@@ -12,46 +12,6 @@ app.include_router(api_router)  # <-- Register routes
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Sample Course Data
-courses = [
-    {"id": 1, "name": "Database Management Systems", "code": "CS301"},
-    {"id": 2, "name": "Data Structures & Algorithms", "code": "CS302"}
-]
-
-dbms_lab_questions = [
-    {"id": 1, "text": "Which of the following is a primary key in a relational database?",
-        "type": "mcq", "options": ["A unique identifier", "A foreign key", "A redundant key", "An index"]},
-    {"id": 2, "text": "What is the function of a foreign key?", "type": "mcq", "options": [
-        "To establish a relationship", "To store duplicate values", "To act as a primary key", "None of the above"]},
-    {"id": 3, "text": "Write an SQL query to retrieve all records from a table named 'Students' where the age is greater than 18.", "type": "text"},
-    {"id": 4, "text": "Explain the difference between OLAP and OLTP.", "type": "text"},
-    {"id": 5, "text": "What is the purpose of normalization in databases?", "type": "text"}
-]
-
-labs = [
-    {"id": 1, "number": 2, "course_id": 1, "questions": dbms_lab_questions},
-    {"id": 2, "number": 3, "course_id": 1, "questions": dbms_lab_questions}
-]
-
-students_sub = [
-    {"id": 1, "name": "Ali", "course_id": 1, "submissions": [
-        {"lab_id": 1, "answers": {"Q1": "A", "Q2": "A", "Q3": "SELECT * FROM Students WHERE age > 18;",
-                                  "Q4": "OLAP vs OLTP explanation", "Q5": "Normalization is..."}},
-        {"lab_id": 2, "answers": {"Q1": "A", "Q2": "B",
-                                  "Q3": "SQL query", "Q4": "Explanation", "Q5": "Purpose"}}
-    ]},
-    {"id": 2, "name": "Fatima", "course_id": 1, "submissions": [
-        {"lab_id": 1, "answers": {"Q1": "A", "Q2": "A",
-                                  "Q3": "Some SQL", "Q4": "Some answer", "Q5": "Purpose"}}
-    ]}
-]
-
-students = [
-    {"id": 1, "name": "Ali Khan", "course_id": 1},
-    {"id": 2, "name": "Sara Ahmed", "course_id": 1},
-    {"id": 3, "name": "Zainab Fatima", "course_id": 2}
-]
-
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -65,7 +25,7 @@ async def std_portal(request: Request):
 
 @app.get("/teacher_portal", response_class=HTMLResponse)
 async def t_course(request: Request):
-    return templates.TemplateResponse("teacher_portal.html", {"request": request, "courses": courses})
+    return templates.TemplateResponse("teacher_portal.html", {"request": request})
 
 
 @app.get("/course/{course_code}", response_class=HTMLResponse)
@@ -80,7 +40,7 @@ async def lab_task(course_id, lab_id, request: Request):
 
 @app.get("/course", response_class=HTMLResponse)
 async def course(request: Request):
-    return templates.TemplateResponse("teacher_course.html", {"request": request, "courses": courses})
+    return templates.TemplateResponse("teacher_course.html", {"request": request})
 
 
 @app.get("/teacher/{course_id}", response_class=HTMLResponse)
@@ -90,50 +50,14 @@ async def teacher_options(request: Request):
 
 @app.get("/teacher/{course_id}/students")
 async def teacher_students(course_id, request: Request):
-    return templates.TemplateResponse("std_list.html", {"request": request, "students": students})
+    return templates.TemplateResponse("std_list.html", {"request": request})
 
 
 @app.get("/teacher/{course_id}/labs")
 async def teacher_labs(course_id, request: Request):
-    return templates.TemplateResponse("t_lab.html", {"request": request, "labs": labs})
+    return templates.TemplateResponse("t_lab.html", {"request": request})
 
 
 @app.get("/teacher/checking/{course_code}/{lab_no}")
 async def teacher_checking(course_code, lab_no, request: Request):
     return templates.TemplateResponse("lab_checking.html", {"request": request})
-
-
-@app.get("/t_lab", response_class=HTMLResponse)
-async def t_lab(request: Request):
-    labs_with_course = []
-    for lab in labs:
-        course = next(
-            (c for c in courses if c['id'] == lab['course_id']), None)
-        labs_with_course.append({"lab": lab, "course": course})
-    return templates.TemplateResponse("t_lab.html", {"request": request, "labs": labs_with_course})
-
-
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    return templates.TemplateResponse("t_dashboard.html", {"request": request, "courses": courses, "labs": labs, "students": students})
-
-
-@app.get("/student_details", response_class=HTMLResponse)
-async def all_student_details(request: Request):
-    all_details = []
-    for student in students_sub:
-        course = next(
-            (c for c in courses if c['id'] == student['course_id']), None)
-        submissions = []
-        for sub in student.get('submissions', []):
-            lab = next((l for l in labs if l['id'] == sub['lab_id']), None)
-            if lab:
-                submissions.append({
-                    "lab_number": lab['number'],
-                    "lab_id": lab['id'],
-                    "questions": lab['questions'],
-                    "answers": sub['answers']
-                })
-        all_details.append(
-            {"student": student, "course": course, "submissions": submissions})
-    return templates.TemplateResponse("std_det.html", {"request": request, "all_details": all_details})
