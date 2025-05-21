@@ -85,7 +85,9 @@
 
             Object.entries(grouped).forEach(([roll, data]) => {
                 const tr = document.createElement("tr");
-
+                tr.onclick = () => {
+                    window.location.href = `/teacher/checking/student/${courseCode}/${roll}`;
+                };
                 tr.innerHTML = `
                     <td>${roll}</td>
                     <td>${data.name}</td>
