@@ -66,3 +66,9 @@ async def teacher_checking(course_code, lab_no, request: Request):
 @app.get("/teacher/checking/student/{course_code}/{student_id}")
 async def teacher_student(course_code, student_id, request: Request):
     return templates.TemplateResponse("t_std.html", {"request": request})
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
