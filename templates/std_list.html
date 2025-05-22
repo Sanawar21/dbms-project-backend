@@ -61,7 +61,7 @@
 <body>
 
     <nav class="custom-navbar">
-        <button class="nav-btn back-btn" onclick="history.back()">← Back</button>
+        <button class="nav-btn back-btn" id="history-back">← Back</button>
         <h2>Computer & Information Systems Engineering Department</h2>
         <button class="nav-btn logout-btn" onclick="window.location.href='/logout'">Logout</button>
     </nav>
@@ -84,10 +84,13 @@
         </table>
     </div>
 
+
     <script>
         const courseCode = window.location.pathname.split("/")[2];  // e.g., /teacher/students/<course_code>
 
-
+        document.querySelector("#history-back").onclick = () => {
+            window.location.href = `/teacher/${courseCode}`;
+        };
 
         async function fetchStudents() {
             const res = await fetch(`/api/teacher/students/${courseCode}`);

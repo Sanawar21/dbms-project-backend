@@ -49,7 +49,7 @@
 <body>
 
     <nav class="custom-navbar">
-        <button class="nav-btn back-btn" onclick="history.back()">← Back</button>
+        <button class="nav-btn back-btn" id="history-back">← Back</button>
         <h2>Computer & Information Systems Engineering Department</h2>
         <button class="nav-btn logout-btn" onclick="window.location.href='/logout'">Logout</button>
     </nav>
@@ -70,6 +70,9 @@
     <script>
         const courseCode = window.location.pathname.split("/")[2];  // Extract course_code from URL
 
+        document.getElementById("history-back").onclick = () => {
+            window.location.href = `/teacher/${courseCode}`;
+        };
 
         document.getElementById("course-code").textContent = courseCode;
 

@@ -47,10 +47,11 @@
     </style>
 </head>
 
+
 <body>
 
     <nav class="custom-navbar">
-        <button class="nav-btn back-btn" onclick="history.back()">← Back</button>
+        <button class="nav-btn back-btn" id="history-back">← Back</button>
         <h2>Computer & Information Systems Engineering Department</h2>
         <button class="nav-btn logout-btn" onclick="window.location.href='/logout'">Logout</button>
     </nav>
@@ -162,6 +163,14 @@
         }
 
         loadQuestions();
+    </script>
+
+    <script>
+        document.getElementById("history-back").addEventListener("click", function () {
+            const courseCode = parts[2];
+            window.location.href = `/course/${courseCode}`;
+
+        });
     </script>
 
 </body>

@@ -50,7 +50,7 @@
 <body>
 
   <nav class="custom-navbar">
-    <button class="nav-btn back-btn" onclick="history.back()">← Back</button>
+    <button class="nav-btn back-btn" id="history-back">← Back</button>
     <h2>Computer & Information Systems Engineering Department</h2>
     <button class="nav-btn logout-btn" onclick="window.location.href='/logout'">Logout</button>
   </nav>
@@ -87,6 +87,10 @@
     const parts = window.location.pathname.split("/");
     const courseCode = parts[3];
     const labNo = parts[4];
+
+    document.getElementById("history-back").addEventListener("click", () => {
+      window.location.href = `/teacher/${courseCode}/labs`;
+    });
 
     fetch(`/api/course_name/${courseCode}`)
       .then((res) => res.json())
