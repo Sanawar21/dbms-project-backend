@@ -20,15 +20,16 @@
       <div class="task-list" id="task-list">
         <!-- Task items will be inserted here -->
       </div>
+      <p id="no-submissions" class="notice" style="display: none;">No student submissions found for this lab.</p>
+
+      <div class="navigation">
+        <button type="button" id="prev-btn" disabled>&larr; Previous</button>
+        <button type="button" id="next-btn" disabled>Next &rarr;</button>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Check</button>
     </form>
-    <p id="no-submissions" class="notice" style="display: none;">No student submissions found for this lab.</p>
 
-    <div class="navigation">
-      <button type="button" id="prev-btn" disabled>&larr; Previous</button>
-      <button type="button" id="next-btn" disabled>Next &rarr;</button>
-    </div>
-
-    <button type="submit" class="submit-btn">Submit Check</button>
   </div>
 
   <script>
@@ -132,10 +133,11 @@
       const student = submissions[currentIndex];
       const formData = new FormData(e.target);
       const result = [];
+      let someUnchecked = false;
 
       student.questions.forEach(q => {
         const correctness = formData.get(`q_${q.TASK_NO}`);
-        if (correctness !== null) {
+        if (correctness !== null && !someUnchecked) {
           result.push({
             roll_no: student.ROLL_NO,
             course_code: courseCode,
@@ -143,8 +145,18 @@
             task_no: q.TASK_NO,
             is_correct: parseInt(correctness)
           });
+        } else {
+          if (!someUnchecked) {
+
+            alert("All answers must be marked before submission.")
+            someUnchecked = true;
+          }
         }
       });
+
+      if (someUnchecked) {
+        return
+      }
 
       const response = await fetch("/api/check_submission", {
         method: "POST",
