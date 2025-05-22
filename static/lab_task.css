@@ -158,3 +158,8 @@ input[type="radio"] {
   text-align: center;
   margin: 20px 0;
 }
+
+.ai-check {
+  text-align: right;
+  margin-bottom: 1rem;
+}

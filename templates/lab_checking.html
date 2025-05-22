@@ -15,6 +15,10 @@
       <p><strong>Lab #<span id="lab-no"></span>: <span id="lab-title"></span></strong></p>
       <p id="student-name"></p>
     </div>
+    <div class="ai-check">
+      <button type="button" id="ai-check-btn" class="submit-btn">🤖 Check with AI</button>
+    </div>
+
     <p id="no-submissions" class="notice" style="display: none;">No student submissions found for this lab.</p>
 
     <form id="check-form" method="post">
@@ -167,7 +171,53 @@
 
       const json = await response.json();
       alert(json.success ? "Marked successfully!" : "Check failed.");
+      if (json.success) {
+        student.questions.forEach(q => {
+          const correctness = result.find(r => r.task_no === q.TASK_NO);
+          if (correctness) {
+            q.IS_CORRECT = correctness.is_correct;
+          }
+        });
+        document.getElementById("next-btn").click()
+      }
     });
+
+    document.getElementById("ai-check-btn").addEventListener("click", async () => {
+      const student = submissions[currentIndex];
+      if (!student.questions || student.questions.length === 0) {
+        alert("This student hasn't submitted any answers.");
+        return;
+      }
+
+      const questions = student.questions.map(q => q.QUESTION_TEXT);
+      const answers = student.questions.map(q => q.ANSWER_TEXT || "");
+
+      const res = await fetch("/api/teacher/ai_check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questions, answers })
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        alert("AI check failed.");
+        return;
+      }
+
+      const aiResults = data.results;
+      const taskItems = document.querySelectorAll("#task-list .task-item");
+
+      taskItems.forEach((div, i) => {
+        const correct = aiResults[i];
+        const radios = div.querySelectorAll(`input[name="q_${student.questions[i].TASK_NO}"]`);
+        radios.forEach(r => {
+          r.checked = parseInt(r.value) === correct;
+        });
+      });
+
+      alert("AI check complete. Answers have been auto-marked.");
+    });
+
 
     fetchSubmissions();
   </script>

@@ -5,6 +5,9 @@ from fastapi.responses import JSONResponse
 from typing import Annotated
 from starlette.requests import Request
 
+from google import genai
+from google.genai import types
+
 import os
 import mysql.connector
 
@@ -552,3 +555,52 @@ async def get_all_labs_of_student(roll_no: int, course_code: str):
     finally:
         cursor.close()
         connection.close()
+
+
+@router.post("/api/teacher/ai_check")
+async def submit_questions(data: dict = Body(...)):
+    questions = data.get("questions", [])
+    answers = data.get("answers", [])
+
+    if not questions or not answers or len(questions) != len(answers):
+        return {"success": False, "message": "Questions and answers must be non-empty and of equal length."}
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        return {"success": False, "message": "Gemini API key not set."}
+
+    client = genai.Client(api_key=gemini_key)
+    model = "gemini-2.0-flash-lite"
+    prompt_lines = [
+        "You are an automated grader.",
+        "Below is a list of questions and student answers.",
+        "For each answer, return 1 if it is correct, otherwise return 0.",
+        "Respond ONLY with a list of 0s and 1s in the same order.",
+        "Format: [1, 0, 1, ...]",
+        "",
+        "Questions and Answers:"
+    ]
+
+    for i, (q, a) in enumerate(zip(questions, answers), 1):
+        prompt_lines.append(f"{i}. Q: {q}\n   A: {a}")
+
+    full_prompt = "\n".join(prompt_lines)
+
+    try:
+        response = client.models.generate_content(
+            model=model,
+            contents=full_prompt
+        )
+        text = response.text.strip()
+        # Try to safely evaluate the list
+        result = eval(text) if text.startswith("[") else []
+        if not isinstance(result, list) or not all(i in (0, 1) for i in result):
+            raise ValueError("Unexpected output format.")
+    except Exception as e:
+        print(f"Gemini error: {e}")
+        return {"success": False, "message": "AI evaluation failed."}
+
+    return {
+        "success": True,
+        "results": result
+    }
